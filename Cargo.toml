@@ -1,0 +1,15 @@
+[package]
+name = "minicloud"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+# clap = "4.2.7"
+axum = { version = "0.6.18"}
+tokio = { version = "1.28.2", features = ["full"] }
+tokio-util = { version = "0.7.8", features = ["full"] }
+serde = { version = "1.0.163", features = ["derive"] }
+colored = { version = "2.0"}
+mime_guess = { version = "2.0.4" }
