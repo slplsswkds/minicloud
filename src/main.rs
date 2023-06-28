@@ -1,5 +1,6 @@
 use std::{net::SocketAddr, env};
 use axum::{routing::get, Router};
+use local_ip_address::local_ip;
 
 mod storage;
 use storage::{parse_paths, files_show};
@@ -19,11 +20,15 @@ async fn main() {
         .route("/", get(root_handler))
         .route("/download", get(download_file))
         .with_state(files);
-    
-    let addr = SocketAddr::from(([192, 168, 50, 69], 3005));
-    println!("listening on {}", addr);
 
-    axum::Server::bind(&addr)
+    let local_ip = match local_ip() {
+        Ok(ip) => ip,
+        Err(err) => panic!("Error getting local IP: {:?}", err)
+    };
+    let socket_addr = SocketAddr::new(local_ip, 8080);
+    println!("listening on {}", socket_addr);
+
+    axum::Server::bind(&socket_addr)
         .serve(app.into_make_service())
         .await
         .unwrap();

@@ -11,3 +11,4 @@ tokio-util = { version = "0.7.8", features = ["full"] }
 serde = { version = "1.0.163", features = ["derive"] }
 colored = { version = "2.0"}
 mime_guess = { version = "2.0.4" }
+local-ip-address = "0.5.3"
