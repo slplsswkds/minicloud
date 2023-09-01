@@ -1,6 +1,6 @@
 use std::{
     fs::canonicalize,
-    path::{PathBuf},
+    path::PathBuf,
 };
 use colored::Colorize;
 

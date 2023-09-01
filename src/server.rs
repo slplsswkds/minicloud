@@ -1,6 +1,4 @@
-use std::{
-    path::{PathBuf},
-};
+use std::path::PathBuf;
 use axum::{
     body::StreamBody,
     http::{header, StatusCode},
@@ -14,7 +12,10 @@ pub async fn root_handler(State(files): State<Vec<PathBuf>>) -> Html<String> {
     let mut list = String::new();
     list += "<p1> ";
     for file in files.into_iter() {
-        list += &format!("<a href=\"{}\">{}</a> </br> ", "/download?name=".to_string() + &file.to_str().unwrap(),file.to_str().unwrap());
+        list += &format!("<a href=\"{}\">{}</a> | <a href=\"{}\">{}</a> </br> ", 
+            "/preview?name=".to_string() + &file.to_str().unwrap(),"preview",
+            "/download?name=".to_string() + &file.to_str().unwrap(),file.to_str().unwrap()
+        );
     }
     list += " <p1>";
     return Html(list);
@@ -33,6 +34,26 @@ pub async fn download_file(Query(filename): Query<Filename>) -> impl IntoRespons
 
     println!("filepath = {}", &filepath.to_str().unwrap());
 
+    let file = match tokio::fs::File::open(&filepath).await {
+        Ok(file) => file,
+        Err(err) => return Err((StatusCode::NOT_FOUND, format!("File not found: {}", err))),
+    };
+    let stream: ReaderStream<tokio::fs::File> = ReaderStream::new(file);
+    let body = StreamBody::new(stream);
+    let name = format!("attachment; filename=\"{}\"", filepath.file_name().unwrap().to_str().unwrap());
+    let headers = [(header::CONTENT_DISPOSITION, name)];
+
+    Ok((headers, body))
+}
+
+pub async fn preview_file(Query(filename): Query<Filename>) -> impl IntoResponse {
+    let filepath = match filename.name {
+        Some(path) => PathBuf::from(&path) ,
+        None => return Err((StatusCode::NOT_FOUND, format!("Missing file name"))),
+    };
+
+    println!("filepath = {}", &filepath.to_str().unwrap());
+
     let content_type = match mime_guess::from_path(&filepath).first_raw() {
         Some(mime) => mime,
         None => return Err((StatusCode::BAD_REQUEST, "MIME Type couldn't be determined".to_string()))
@@ -44,12 +65,7 @@ pub async fn download_file(Query(filename): Query<Filename>) -> impl IntoRespons
     };
     let stream = ReaderStream::new(file);
     let body = StreamBody::new(stream);
-    //let name = &format!("attachment; filename=\"{:?}\"", filepath.file_name());
-    let headers = [
-        (header::CONTENT_TYPE, content_type),
-
-        //(header::CONTENT_DISPOSITION, "attachment; filename=\"file.mp3\""), // To force file download
-    ];
+    let headers = [(header::CONTENT_TYPE, content_type)];
 
     Ok((headers, body))
 }
