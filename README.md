@@ -1,4 +1,1 @@
-## Usage:
-1) build it
-2) run it: _*minicloud /path/to/files/ /more/files/*_
-3) Enter to your browser _IP:8080_
+Currently, minicloud can download files that have not been added to it as an argument, so it is recommended to use it on behalf of a user who does not have access to files other than those that are planned to be distributed
