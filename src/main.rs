@@ -1,40 +1,42 @@
-use std::{net::SocketAddr, env};
-use axum::{routing::get, Router};
-use local_ip_address::local_ip;
+mod cli_args;
+mod fs_object;
+mod html_page;
 
-mod storage;
-use storage::{parse_paths, files_show};
-
-mod server;
-use server::{root_handler, download_file, preview_file};
+use crate::html_page::html_page;
+use axum::{routing::get, Router, extract::{State, Query}, response::Html};
+use clap::Parser;
+use fs_object::{content_recursively, FSObject};
+use std::sync::Arc;
 
 #[tokio::main]
 async fn main() {
-    let mut args: Vec<String> = env::args().collect(); args.remove(0); args.dedup();
-    
-    let files = parse_paths(&args);
-    if files.len() == 0 { println!(
-        "No file has been transferred to the program
+    let mut cli_args = cli_args::Args::parse();
+    if cli_args.prepare_data().is_err() {
+        return;
+    }
 
-        Use minicloud /path/to/file /other/files/* /more/files/*/*"
-    ); return }
-    files_show(&files);
+    // Get file tree
+    let files = match content_recursively(&cli_args.paths) {
+        Ok(content) => content,
+        Err(err) => {
+            eprintln!("Error: {:?}", err);
+            return; // close mnicloud
+        }
+    };
+
+    println!("{}", html_page::html_page(&files));
 
     let app = Router::new()
-        .route("/", get(root_handler))
-        .route("/download", get(download_file))
-        .route("/preview", get(preview_file))
-        .with_state(files);
+        .route("/", get(root_handler)
+        .with_state(Arc::new(files)));
 
-    let local_ip = match local_ip() {
-        Ok(ip) => ip,
-        Err(err) => panic!("Error getting local IP: {:?}", err)
-    };
-    let socket_addr = SocketAddr::new(local_ip, 48666);
-    println!("listening on {}", socket_addr);
-
-    axum::Server::bind(&socket_addr)
-        .serve(app.into_make_service())
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:3000")
         .await
         .unwrap();
+
+    axum::serve(listener, app).await.unwrap();
+}
+
+async fn root_handler(files: State<Arc<Vec<FSObject>>>) -> Html<String> {
+    Html(html_page(&files))
 }

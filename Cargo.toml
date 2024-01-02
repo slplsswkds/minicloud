@@ -1,14 +1,16 @@
 [package]
 name = "minicloud"
-version = "0.1.2"
+version = "0.2.0"
 edition = "2021"
+author = ["slplsswkds <slplsswkds@protonmail.com>"]
 
 [dependencies]
-# clap = "4.2.7"
-axum = { version = "0.6.18"}
-tokio = { version = "1.28.2", features = ["full"] }
-tokio-util = { version = "0.7.8", features = ["full"] }
-serde = { version = "1.0.163", features = ["derive"] }
-colored = { version = "2.0"}
+clap = { version = "4.4.12", features = ["derive" ]}  # --- Arguments parsing
+#wild = "2.2.0"  # --- Augment clap: for supporting wildcards (*) on Windows like you do Linux
+tokio = { version = "1.35.1", features = ["full"] }
+axum = { version = "0.7.3"}
+tokio-util = { version = "0.7.10", features = ["full"] }
+serde = { version = "1.0.193", features = ["derive"] }
+colored = { version = "2.0.4"}
 mime_guess = { version = "2.0.4" }
-local-ip-address = "0.5.3"
+local-ip-address = "0.5.6"
