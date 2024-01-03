@@ -34,16 +34,35 @@ pub fn content_recursively(paths: &Vec<PathBuf>) -> Result<Vec<FSObject>, Error>
     let mut fs_objects_root: Vec<FSObject> = Vec::new();
 
     for path in paths {
+        let metadata = match path.metadata() {
+            Ok(metadata) => metadata,
+            Err(err) => {
+                eprintln!("{:?}: {err}", path);
+                let empty_vec: Vec<FSObject> = Vec::new();
+                return Ok(empty_vec); 
+            }
+        };
         let mut fs_object = FSObject {
             path: path.clone(),
-            metadata: path.metadata()?,
+            metadata: metadata,
             content: None,
         };
 
         if path.is_dir() {
             fs_object.content = Some(Vec::new());
-            let dir_content = read_dir_content(&path)?;
-            fs_object.content = Some(content_recursively(&dir_content).unwrap())
+            match read_dir_content(&path) {
+                Ok(dir_content) => {
+                    if dir_content.len() > 0 {
+                        fs_object.content = Some(content_recursively(&dir_content).expect("MY_ERROR_1"))
+                    }
+                },
+                Err(err) => {
+                    eprintln!("{:?}: {err}", path);
+                    let empty_vec: Vec<FSObject> = Vec::new();
+                    return Ok(empty_vec);
+                }
+            }
+            //fs_object.content = Some(content_recursively(&dir_content).unwrap())
             //fs_object.content = Some(dir_content);
         }
 
@@ -56,8 +75,8 @@ pub fn content_recursively(paths: &Vec<PathBuf>) -> Result<Vec<FSObject>, Error>
 fn read_dir_content(path: &PathBuf) -> Result<Vec<PathBuf>, Error> {
     let mut paths: Vec<PathBuf> = Vec::new();
 
-    for entrie in fs::read_dir(path)? {
-        let entrie = entrie?;
+    for entrie in fs::read_dir(path)? { // !!! handle this !!!. error begining is there
+        let entrie = entrie.expect("MY_ERROR_3");
         paths.push(entrie.path());
     }
 

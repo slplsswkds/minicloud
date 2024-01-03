@@ -24,19 +24,22 @@ async fn main() {
         }
     };
 
-    println!("{}", html_page::html_page(&files));
+    //println!("{}", html_page::unordered_list(&files));
+
+    //println!("{}", html_page::html_page(&files));
+
+    //----------------------------------------------
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:3000")
+        .await
+        .unwrap();
 
     let app = Router::new()
         .route("/", get(root_handler)
         .with_state(Arc::new(files)));
 
-    let listener = tokio::net::TcpListener::bind("127.0.0.1:3000")
-        .await
-        .unwrap();
-
     axum::serve(listener, app).await.unwrap();
 }
 
 async fn root_handler(files: State<Arc<Vec<FSObject>>>) -> Html<String> {
-    Html(html_page(&files))
+    Html(html_page::html_page(&files))
 }

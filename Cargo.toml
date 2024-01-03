@@ -1,6 +1,6 @@
 [package]
 name = "minicloud"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2021"
 author = ["slplsswkds <slplsswkds@protonmail.com>"]
 
@@ -14,3 +14,4 @@ serde = { version = "1.0.193", features = ["derive"] }
 colored = { version = "2.0.4"}
 mime_guess = { version = "2.0.4" }
 local-ip-address = "0.5.6"
+html = "0.6.3"

@@ -93,7 +93,7 @@ fn script() -> String {
 pub fn body(fsobjects: &Vec<FSObject>) -> String {
     format!(
         "\n<body>\n<ul>{}</ul>\n{}\n</body>\n",
-        unordered_list_tree(fsobjects),
+        unordered_list(fsobjects),
         script()
     )
 }
@@ -104,4 +104,33 @@ pub fn html_page(fsobjects: &Vec<FSObject>) -> String {
         head(),
         body(fsobjects)
     )
+}
+
+// Returns html unordered list from Vec<FSOBject> recursively
+pub fn unordered_list(files: &Vec<FSObject>) -> String {
+    let list_of_items = list_of_items(files);
+    format!("<ul>\n{}</ul>\n", list_of_items)
+}
+
+// Returns the html code for the list from &Vec<FSObject>
+fn list_of_items(items: &Vec<FSObject>) -> String {
+    let mut list = String::new();
+    for item in items.iter() {
+        if item.is_dir() {
+            list += &list_item(&item);
+            match &item.content {
+                Some(content) => list += &unordered_list(&content), // += list_of_items for non-tree
+                None => {}
+            };
+        } else {
+            list += &list_item(item);
+        }
+    }
+    list
+}
+
+// Returns the html code for one list item
+fn list_item(item: &FSObject) -> String {
+    let list_item = item.name();
+    format!("<li>{}</li>\n", list_item)
 }
