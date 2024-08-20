@@ -2,9 +2,9 @@ mod cli_args;
 mod fs_object;
 mod html_page;
 
-use axum::{routing::get, Router, extract::{State, Query}, response::Html};
+use axum::{routing::get, Router, extract::State, response::Html};
 use clap::Parser;
-use fs_object::{content_recursively, FSObject};
+use fs_object::content_recursively;
 use std::sync::Arc;
 
 #[tokio::main]
@@ -27,25 +27,26 @@ async fn main() {
         }
     };
 
-    //println!("{}", html_page::unordered_list(&files));
+    println!("Obtained {} FSObjects", cli_args.paths.len());
 
-    //println!("{}", html_page::html_page(&files));
-
+    print!("Generating HTML...");
+    let files_page: Html<String> = Html(html_page::html_page(&fs_objects));
+    println!(" OK");
     //----------------------------------------------
     let listener = tokio::net::TcpListener::bind("127.0.0.1:3000")
         .await
         .unwrap();
 
     println!("\nlistening 127.0.0.1:3000");
-    println!("Obtained {} FSObjects", cli_args.paths.len());
 
     let app = Router::new()
         .route("/", get(root_handler)
-        .with_state(Arc::new(fs_objects)));
+            .with_state(Arc::new(files_page)),
+        );
 
     axum::serve(listener, app).await.unwrap();
 }
 
-async fn root_handler(files: State<Arc<Vec<FSObject>>>) -> Html<String> {
-    Html(html_page::html_page(&files))
+async fn root_handler(page: State<Arc<Html<String>>>) -> Html<String> {
+    (**page).clone()
 }
