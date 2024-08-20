@@ -1,22 +1,23 @@
+//! This module created to generate HTML page with list of files in tree FSObject
 use crate::fs_object::FSObject;
 use axum::{extract::State, http::header, response::Html};
 use std::path::PathBuf;
 
-// Returns a generated line of HTML code that contains a list of files in the form of a tree
-fn unordered_list_tree(fsobjects: &Vec<FSObject>) -> String {
+/// Returns a generated line of HTML code that contains a list of files in the form of a tree
+fn unordered_list_tree(fsobject: &Vec<FSObject>) -> String {
     let mut list = String::new();
-    fsobjects.iter().for_each(|fsobject| {
+    fsobject.iter().for_each(|fsobject| {
         list += "<li>";
         if fsobject.is_dir() {
             list += &format!(
                 "<span class=\"caret\">{}</span>\n<ul class=\"nested\">\n",
                 fsobject.name()
             );
-            let embeded_list = match &fsobject.content {
+            let embedded_list = match &fsobject.content {
                 Some(l) => unordered_list_tree(l),
                 None => String::new(),
             };
-            list += &embeded_list;
+            list += &embedded_list;
             list += "</ul>\n";
         } else {
             list += fsobject.name()
@@ -106,13 +107,13 @@ pub fn html_page(fsobjects: &Vec<FSObject>) -> String {
     )
 }
 
-// Returns html unordered list from Vec<FSOBject> recursively
+/// Returns html unordered list from Vec<FSOBject> recursively
 pub fn unordered_list(files: &Vec<FSObject>) -> String {
     let list_of_items = list_of_items(files);
     format!("<ul>\n{}</ul>\n", list_of_items)
 }
 
-// Returns the html code for the list from &Vec<FSObject>
+/// Returns the html code for the list from &Vec<FSObject>
 fn list_of_items(items: &Vec<FSObject>) -> String {
     let mut list = String::new();
     for item in items.iter() {
@@ -129,7 +130,7 @@ fn list_of_items(items: &Vec<FSObject>) -> String {
     list
 }
 
-// Returns the html code for one list item
+/// Returns the html code for one list item
 fn list_item(item: &FSObject) -> String {
     let list_item = item.name();
     format!("<li>{}</li>\n", list_item)

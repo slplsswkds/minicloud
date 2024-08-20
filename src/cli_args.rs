@@ -3,7 +3,7 @@
 use clap::Parser;
 use std::path::PathBuf;
 
-/// Program for sharing files
+/// Store parsed values from CLI
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 pub struct Args {
@@ -21,7 +21,7 @@ pub struct Args {
 }
 
 impl Args {
-    /// Prepare vector of paths for using
+    /// Prepare vector of paths for using. Remove wrong paths and print errors.
     pub fn prepare_data(&mut self) -> Result<(), ()> {
         self.optimize_paths();
 

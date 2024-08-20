@@ -1,9 +1,12 @@
+//! This module created to scan filesystem and store files in tree-style.
+
 use std::ffi::OsStr;
 use std::fs;
 use std::fs::Metadata;
 use std::io::Error;
 use std::path::PathBuf;
 
+/// A file system element for building a directory tree in RAM and accessing metadata.
 #[derive(Debug)]
 pub struct FSObject {
     /// Path to object
@@ -30,6 +33,7 @@ impl FSObject {
     }
 }
 
+/// Scan vector of PathBuf recursively into FSObject
 pub fn content_recursively(paths: &Vec<PathBuf>) -> Result<Vec<FSObject>, Error> {
     let mut fs_objects_root: Vec<FSObject> = Vec::new();
 
@@ -39,7 +43,7 @@ pub fn content_recursively(paths: &Vec<PathBuf>) -> Result<Vec<FSObject>, Error>
             Err(err) => {
                 eprintln!("{:?}: {err}", path);
                 let empty_vec: Vec<FSObject> = Vec::new();
-                return Ok(empty_vec); 
+                return Ok(empty_vec);
             }
         };
         let mut fs_object = FSObject {
@@ -55,7 +59,7 @@ pub fn content_recursively(paths: &Vec<PathBuf>) -> Result<Vec<FSObject>, Error>
                     if dir_content.len() > 0 {
                         fs_object.content = Some(content_recursively(&dir_content).expect("MY_ERROR_1"))
                     }
-                },
+                }
                 Err(err) => {
                     eprintln!("{:?}: {err}", path);
                     let empty_vec: Vec<FSObject> = Vec::new();

@@ -15,6 +15,10 @@ async fn main() {
         return;
     }
 
+    if cli_args.paths.is_empty() {
+        return;
+    }
+
     // Get file tree
     let files = match content_recursively(&cli_args.paths) {
         Ok(content) => content,
@@ -32,6 +36,9 @@ async fn main() {
     let listener = tokio::net::TcpListener::bind("127.0.0.1:3000")
         .await
         .unwrap();
+
+    println!("listening 127.0.0.1:3000");
+    println!("Obtained {} FSObjects", cli_args.paths.len());
 
     let app = Router::new()
         .route("/", get(root_handler)
