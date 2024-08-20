@@ -1,10 +1,12 @@
 //! This module created to scan filesystem and store files in tree-style.
 
-use std::ffi::OsStr;
-use std::fs;
-use std::fs::Metadata;
-use std::io::Error;
-use std::path::PathBuf;
+use std::{
+    fs,
+    fs::Metadata,
+    ffi::OsStr,
+    io::Error,
+    path::PathBuf,
+};
 
 /// A file system element for building a directory tree in RAM and accessing metadata.
 #[derive(Debug)]
@@ -34,21 +36,41 @@ impl FSObject {
 }
 
 /// Scan vector of PathBuf recursively into FSObject
+///
+/// This function will return an error in the following situations, but is not limited to just these cases:
+/// - The user lacks permissions to perform metadata call on path.
+/// - path does not exist.
+
 pub fn content_recursively(paths: &Vec<PathBuf>) -> Result<Vec<FSObject>, Error> {
     let mut fs_objects_root: Vec<FSObject> = Vec::new();
 
     for path in paths {
-        let metadata = match path.metadata() {
-            Ok(metadata) => metadata,
-            Err(err) => {
-                eprintln!("{:?}: {err}", path);
-                let empty_vec: Vec<FSObject> = Vec::new();
-                return Ok(empty_vec);
-            }
-        };
+        let metadata;
+
+        if path.is_symlink() {
+            metadata = match path.symlink_metadata() {
+                Ok(metadata) => metadata,
+                Err(err) => {
+                    eprintln!("{:?}: {err}", path);
+                    // let empty_vec: Vec<FSObject> = Vec::new();
+                    // return Ok(empty_vec);                       // not good...
+                    continue; // skip file !!!!!!!!!!!!!!!!!!!!!! fix this in the future
+                }
+            };
+        } else {
+            metadata = match path.metadata() {
+                Ok(metadata) => metadata,
+                Err(err) => {
+                    eprintln!("{:?}: {err}", path);
+                    let empty_vec: Vec<FSObject> = Vec::new();
+                    return Ok(empty_vec);                       // not good...
+                }
+            };
+        }
+
         let mut fs_object = FSObject {
             path: path.clone(),
-            metadata: metadata,
+            metadata,
             content: None,
         };
 
@@ -66,8 +88,6 @@ pub fn content_recursively(paths: &Vec<PathBuf>) -> Result<Vec<FSObject>, Error>
                     return Ok(empty_vec);
                 }
             }
-            //fs_object.content = Some(content_recursively(&dir_content).unwrap())
-            //fs_object.content = Some(dir_content);
         }
 
         fs_objects_root.push(fs_object);
@@ -76,12 +96,17 @@ pub fn content_recursively(paths: &Vec<PathBuf>) -> Result<Vec<FSObject>, Error>
 }
 
 /// Returns a list of files, directories, and symbolic links in a directory
+///
+/// This function will return an error in the following situations, but is not limited to just these cases:
+/// - The provided path doesn’t exist.
+/// - The process lacks permissions to view the contents.
+/// - The path points at a non-directory file.
 fn read_dir_content(path: &PathBuf) -> Result<Vec<PathBuf>, Error> {
     let mut paths: Vec<PathBuf> = Vec::new();
 
-    for entrie in fs::read_dir(path)? { // !!! handle this !!!. error begining is there
-        let entrie = entrie.expect("MY_ERROR_3");
-        paths.push(entrie.path());
+    for entry_result in fs::read_dir(path)? { // !!! handle this !!!. error begining is there
+        let entry = entry_result.expect("MY_ERROR_3");
+        paths.push(entry.path());
     }
 
     Ok(paths)

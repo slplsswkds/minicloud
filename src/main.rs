@@ -2,7 +2,6 @@ mod cli_args;
 mod fs_object;
 mod html_page;
 
-use crate::html_page::html_page;
 use axum::{routing::get, Router, extract::{State, Query}, response::Html};
 use clap::Parser;
 use fs_object::{content_recursively, FSObject};
@@ -20,7 +19,7 @@ async fn main() {
     }
 
     // Get file tree
-    let files = match content_recursively(&cli_args.paths) {
+    let fs_objects = match content_recursively(&cli_args.paths) {
         Ok(content) => content,
         Err(err) => {
             eprintln!("Error: {:?}", err);
@@ -37,12 +36,12 @@ async fn main() {
         .await
         .unwrap();
 
-    println!("listening 127.0.0.1:3000");
+    println!("\nlistening 127.0.0.1:3000");
     println!("Obtained {} FSObjects", cli_args.paths.len());
 
     let app = Router::new()
         .route("/", get(root_handler)
-        .with_state(Arc::new(files)));
+        .with_state(Arc::new(fs_objects)));
 
     axum::serve(listener, app).await.unwrap();
 }

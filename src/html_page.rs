@@ -1,7 +1,5 @@
 //! This module created to generate HTML page with list of files in tree FSObject
 use crate::fs_object::FSObject;
-use axum::{extract::State, http::header, response::Html};
-use std::path::PathBuf;
 
 /// Returns a generated line of HTML code that contains a list of files in the form of a tree
 fn unordered_list_tree(fsobject: &Vec<FSObject>) -> String {
@@ -27,7 +25,7 @@ fn unordered_list_tree(fsobject: &Vec<FSObject>) -> String {
     list
 }
 
-fn meta() -> String {
+fn configure_viewport() -> String {
     String::from("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">")
 }
 
@@ -71,7 +69,7 @@ fn style() -> String {
 }
 
 fn head() -> String {
-    let head = format!("<head>\n{}\n{}\n</head>", meta(), style());
+    let head = format!("<head>\n{}\n{}\n</head>", configure_viewport(), style());
     head
 }
 
@@ -107,13 +105,13 @@ pub fn html_page(fsobjects: &Vec<FSObject>) -> String {
     )
 }
 
-/// Returns html unordered list from Vec<FSOBject> recursively
+/// Returns html unordered list from [`Vec<FSOBject>`] recursively
 pub fn unordered_list(files: &Vec<FSObject>) -> String {
     let list_of_items = list_of_items(files);
     format!("<ul>\n{}</ul>\n", list_of_items)
 }
 
-/// Returns the html code for the list from &Vec<FSObject>
+/// Returns the html code for the list from &[`Vec<FSObject>`]
 fn list_of_items(items: &Vec<FSObject>) -> String {
     let mut list = String::new();
     for item in items.iter() {

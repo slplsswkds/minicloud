@@ -38,7 +38,6 @@ impl Args {
             self.canonicalize_paths();
         }
 
-        self.paths.iter().for_each(|path| println!("{path:?}")); // print paths from args
         Ok(())
     }
 
