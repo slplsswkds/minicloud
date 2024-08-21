@@ -29,11 +29,18 @@ async fn main() {
 
     println!("Obtained {} FSObjects", cli_args.paths.len());
 
-    print!("Generating HTML...");
-    let files_page: Html<String> = Html(html_page::html_page(&fs_objects));
-    println!(" OK");
+    let files_html_page: Html<String>;
 
-    println!("{}", html_page::html_page(&fs_objects));
+    if cli_args.no_html {
+        files_html_page = Html("".to_string()); // empty page
+    } else {
+        print!("Generating HTML...");
+        files_html_page = Html(html_page::html_page(&fs_objects));
+        println!(" OK");
+
+        #[cfg(debug_assertions)]
+        println!("{}", html_page::html_page(&fs_objects));
+    }
     //----------------------------------------------
     let listener = tokio::net::TcpListener::bind("127.0.0.1:3000")
         .await
@@ -43,7 +50,7 @@ async fn main() {
 
     let app = Router::new()
         .route("/", get(root_handler)
-            .with_state(Arc::new(files_page)),
+            .with_state(Arc::new(files_html_page)),
         );
 
     axum::serve(listener, app).await.unwrap();
