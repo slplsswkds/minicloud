@@ -111,8 +111,7 @@ fn base() -> String {
 
 //--------------------------------------------------------------------------------------------------
 pub fn body(fsobjects: &Vec<FSObject>) -> String {
-    format!(
-        "<body>
+    format!("<body>
     <ul>
     {}
     </ul>
@@ -120,31 +119,7 @@ pub fn body(fsobjects: &Vec<FSObject>) -> String {
     )
 }
 
-/// Returns a generated line of HTML code that contains a list of files in the form of a tree
-fn unordered_list_tree(fsobject: &Vec<FSObject>) -> String {
-    let mut list = String::new();
-    fsobject.iter().for_each(|fsobject| {
-        list += "<li>";
-        if fsobject.is_dir() {
-            list += &format!(
-                "<span class=\"caret\">{}</span>\n<ul class=\"nested\">\n",
-                fsobject.name()
-            );
-            let embedded_list = match &fsobject.content {
-                Some(l) => unordered_list_tree(l),
-                None => String::new(),
-            };
-            list += &embedded_list;
-            list += "</ul>\n";
-        } else {
-            list += fsobject.name()
-        }
-        list += "</li>\n"
-    });
-    list
-}
-
-/// Returns html unordered list from [`Vec<FSOBject>`] recursively
+/// Returns html unordered list from [`Vec<FSObject>`] recursively
 pub fn unordered_list(files: &Vec<FSObject>) -> String {
     let list_of_items = list_of_items(files);
     format!("<ul>\n{}</ul>\n", list_of_items)
