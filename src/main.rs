@@ -23,7 +23,7 @@ async fn main() {
         Ok(content) => content,
         Err(err) => {
             eprintln!("Error: {:?}", err);
-            return; // close mnicloud
+            return; // close minicloud
         }
     };
 
@@ -32,6 +32,8 @@ async fn main() {
     print!("Generating HTML...");
     let files_page: Html<String> = Html(html_page::html_page(&fs_objects));
     println!(" OK");
+
+    println!("{}", html_page::html_page(&fs_objects));
     //----------------------------------------------
     let listener = tokio::net::TcpListener::bind("127.0.0.1:3000")
         .await

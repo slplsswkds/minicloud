@@ -1,37 +1,48 @@
 //! This module created to generate HTML page with list of files in tree FSObject
 use crate::fs_object::FSObject;
 
-/// Returns a generated line of HTML code that contains a list of files in the form of a tree
-fn unordered_list_tree(fsobject: &Vec<FSObject>) -> String {
-    let mut list = String::new();
-    fsobject.iter().for_each(|fsobject| {
-        list += "<li>";
-        if fsobject.is_dir() {
-            list += &format!(
-                "<span class=\"caret\">{}</span>\n<ul class=\"nested\">\n",
-                fsobject.name()
-            );
-            let embedded_list = match &fsobject.content {
-                Some(l) => unordered_list_tree(l),
-                None => String::new(),
-            };
-            list += &embedded_list;
-            list += "</ul>\n";
-        } else {
-            list += fsobject.name()
-        }
-        list += "</li>\n"
-    });
-    list
+pub fn html_page(fsobjects: &Vec<FSObject>) -> String {
+    format!(
+        "<!DOCTYPE html>
+<html>
+{}
+{}
+</html>",
+        head(),
+        body(fsobjects)
+    )
 }
 
-fn configure_viewport() -> String {
-    String::from("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">")
+//------------------------------ Head elements -----------------------------------------------------
+/// Configure <title>, <style>, <meta>, <link>, <script>, and <base>. Not finished
+#[inline]
+fn head() -> String {
+    format!(
+        "<head>
+            {}
+            {}
+            {}
+            {}
+            {}
+            {}
+        \r</head>\n",
+        title(),
+        style(),
+        meta(),
+        link(),
+        script(),
+        base()
+    )
 }
 
+#[inline]
+fn title() -> String {
+    format!("\n<title> Minicloud v{} </title>\n", env!("CARGO_PKG_VERSION"))
+}
+
+#[inline]
 fn style() -> String {
-    String::from(
-        "<style>
+    String::from("\n<style>
     ul,
     #myUL {
       list-style-type: none;
@@ -64,45 +75,73 @@ fn style() -> String {
     .active {
       display: block;
     }
-  </style>",
+</style>",
     )
 }
 
-fn head() -> String {
-    let head = format!("<head>\n{}\n{}\n</head>", configure_viewport(), style());
-    head
+#[inline]
+fn meta() -> String {
+    "\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n".to_string()
 }
 
+#[inline]
+fn link() -> String {
+    "\n".to_string()
+}
+
+#[inline]
 fn script() -> String {
-    String::from(
-        "<script>
+    "\n<script>
     var toggler = document.getElementsByClassName(\"caret\");
     var i;
-
     for (i = 0; i < toggler.length; i++) {
-      toggler[i].addEventListener(\"click\", function () {
-        this.parentElement.querySelector(\".nested\").classList.toggle(\"active\");
-        this.classList.toggle(\"caret-down\");
-      });
+        toggler[i].addEventListener(\"click\", function () {
+            this.parentElement.querySelector(\".nested\").classList.toggle(\"active\");
+            this.classList.toggle(\"caret-down\");
+        });
     }
-</script>\n",
-    )
+</script>\n".to_string()
 }
 
+#[inline]
+fn base() -> String {
+    //<base href="https://www.w3schools.com/" target="_blank">
+    "".to_string()
+}
+
+//--------------------------------------------------------------------------------------------------
 pub fn body(fsobjects: &Vec<FSObject>) -> String {
     format!(
-        "\n<body>\n<ul>{}</ul>\n{}\n</body>\n",
-        unordered_list(fsobjects),
-        script()
+        "<body>
+    <ul>
+    {}
+    </ul>
+</body>", unordered_list(fsobjects)
     )
 }
 
-pub fn html_page(fsobjects: &Vec<FSObject>) -> String {
-    format!(
-        "<!DOCTYPE html>\n<html>\n{}\n{}\n</html>\n",
-        head(),
-        body(fsobjects)
-    )
+/// Returns a generated line of HTML code that contains a list of files in the form of a tree
+fn unordered_list_tree(fsobject: &Vec<FSObject>) -> String {
+    let mut list = String::new();
+    fsobject.iter().for_each(|fsobject| {
+        list += "<li>";
+        if fsobject.is_dir() {
+            list += &format!(
+                "<span class=\"caret\">{}</span>\n<ul class=\"nested\">\n",
+                fsobject.name()
+            );
+            let embedded_list = match &fsobject.content {
+                Some(l) => unordered_list_tree(l),
+                None => String::new(),
+            };
+            list += &embedded_list;
+            list += "</ul>\n";
+        } else {
+            list += fsobject.name()
+        }
+        list += "</li>\n"
+    });
+    list
 }
 
 /// Returns html unordered list from [`Vec<FSOBject>`] recursively
