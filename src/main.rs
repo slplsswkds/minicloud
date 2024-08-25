@@ -24,54 +24,55 @@ async fn main() {
         }
     };
 
-    // print the names of all files that will be shared
-    #[cfg(debug_assertions)] {
-        for _ in 0..50 { print!("-") };
-        println!("\n\n");
+    // Debug info about obtained files, directories, and symbolic links
+    #[cfg(debug_assertions)]
+    {
+        let total_elements: usize = fs_objects
+            .iter()
+            .map(|fs_obj| fs_obj.recursive_iter().count())
+            .sum();
 
-        println!("list of obtained files:");
-        for (num, obj) in fs_objects.first().unwrap().file_iter().enumerate() {
-            println!("\t{num}. {}", obj.name());
-        }
+        let total_files: usize = fs_objects
+            .iter()
+            .map(|fs_obj| fs_obj.file_iter().count())
+            .sum();
 
-        for _ in 0..50 { print!("-") };
-        println!("\n\n");
+        let total_directories: usize = fs_objects
+            .iter()
+            .map(|fs_obj| fs_obj.dir_iter().count())
+            .sum();
 
-        println!("list of obtained dirs:");
-        for (num, obj) in fs_objects.first().unwrap().dir_iter().enumerate() {
-            println!("\t{num}. {}", obj.name());
-        }
+        let total_symlinks: usize = fs_objects
+            .iter()
+            .map(|fs_obj| fs_obj.symlink_iter().count())
+            .sum();
 
-        for _ in 0..50 { print!("-") };
-        println!("\n\n");
-
-        println!("list of the all FSObjects:");
-        for (num, obj) in fs_objects.first().unwrap().recursive_iter().enumerate() {
-            println!("\t{num}. {}", obj.name());
-        }
-
-        for _ in 0..50 { print!("-") };
-        println!("\n\n");
+        println!("\nObtained:\t{} elements, where:", total_elements);
+        println!("\t\t{} files", total_files);
+        println!("\t\t{} directories", total_directories);
+        println!("\t\t{} symbolic links\n", total_symlinks);
     }
 
     let files_html_page: Html<String>;
 
     if cli_args.no_html {
+        println!("Html will not be generated");
         files_html_page = Html("".to_string()); // empty page
     } else {
         print!("Generating HTML...");
         files_html_page = Html(html_page::html_page(&fs_objects));
         println!(" OK");
-
-        // #[cfg(debug_assertions)]
-        // println!("{}", html_page::html_page(&fs_objects));
     }
+
+    // #[cfg(debug_assertions)]
+    // println!("{}", html_page::html_page(&fs_objects));
+
     //----------------------------------------------
     let listener = tokio::net::TcpListener::bind("127.0.0.1:3000")
         .await
         .unwrap();
 
-    println!("\nlistening 127.0.0.1:3000");
+    println!("\nlistening on 127.0.0.1:3000");
 
     let app = Router::new()
         .route("/", get(root_handler)

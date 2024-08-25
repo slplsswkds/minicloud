@@ -26,7 +26,7 @@ pub struct FSObject {
     /// Object metadata
     metadata: Metadata,
 
-    /// Containt contents of the folder.
+    /// Contain contents of the folder.
     /// If this file or folder is empty - the value is None
     pub content: Option<Vec<FSObject>>,
 }
@@ -118,10 +118,11 @@ impl FSObject {
         })
     }
 
-    // Return iterator over each FSObject that is a symbolic link
-    // pub fn symlink_iter(&self) -> impl Iterator<Item=&FSObject> {
-    //     todo!() // not implemented yet.
-    // }
+    /// Return iterator over each FSObject that is a symbolic link. Not ready yet!
+    pub fn symlink_iter(&self) -> impl Iterator<Item=&FSObject> {
+        // !!!not implemented yet.
+        std::iter::empty::<&FSObject>()
+    }
 }
 
 /// Scan vector of PathBuf recursively into FSObject
