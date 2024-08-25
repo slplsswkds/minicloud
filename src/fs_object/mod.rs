@@ -8,6 +8,15 @@ use std::{
     path::PathBuf,
 };
 
+#[cfg(target_family = "unix")]
+use std::os::unix::fs::MetadataExt;
+
+#[cfg(target_family = "windows")]
+use std::os::windows::prelude::*;
+
+use std::string::String;
+
+
 /// A file system element for building a directory tree in RAM and accessing metadata.
 #[derive(Debug)]
 pub struct FSObject {
@@ -27,11 +36,29 @@ impl FSObject {
         self.metadata.is_dir()
     }
 
+    pub fn is_symlink(&self) -> bool {
+        self.metadata.is_symlink()
+    }
+
     pub fn name(&self) -> &str {
         self.path
             .file_name()
             .and_then(OsStr::to_str)
             .expect("Failed to retrieve file name")
+    }
+
+    pub fn size(&self) -> String {
+        let size_string;
+
+        #[cfg(target_family = "unix")]
+        {
+            size_string = format!("{} kB", self.metadata.size() / 1000);
+        }
+
+        #[cfg(target_family = "windows")]
+        return self.metadata.file_size();
+
+        size_string
     }
 }
 

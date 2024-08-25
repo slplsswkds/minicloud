@@ -112,9 +112,7 @@ fn base() -> String {
 //--------------------------------------------------------------------------------------------------
 pub fn body(fsobjects: &Vec<FSObject>) -> String {
     format!("<body>
-    <ul>
-    {}
-    </ul>
+    \r{}
 </body>", unordered_list(fsobjects)
     )
 }
@@ -144,6 +142,17 @@ fn list_of_items(items: &Vec<FSObject>) -> String {
 
 /// Returns the html code for one list item
 fn list_item(item: &FSObject) -> String {
-    let list_item = item.name();
-    format!("<li>{}</li>\n", list_item)
+    let list_item: String;
+    if item.is_dir() {
+        list_item = format!("<li>📁 {}</li>\n", item.name())
+    } else if item.is_symlink() {
+        list_item = format!("<li>🔗 {}</li>\n", item.name())
+    } else {
+        list_item = format!("<li>🗋 {}, {}</li>\n", item.name(), item.size())
+    }
+    return list_item;
 }
+
+// fn href<T: AsRef<String>>(name: &T, uri: &T) -> String {
+//     format!("<a href=\"{}\">{}</a>", uri.as_ref(), name.as_ref())
+// }
