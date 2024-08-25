@@ -32,6 +32,10 @@ pub struct FSObject {
 }
 
 impl FSObject {
+    pub fn is_file(&self) -> bool {
+        self.metadata.is_file()
+    }
+
     pub fn is_dir(&self) -> bool {
         self.metadata.is_dir()
     }
@@ -60,6 +64,64 @@ impl FSObject {
 
         size_string
     }
+
+    /// Return iterator over each FSObject
+    pub fn recursive_iter(&self) -> impl Iterator<Item=&FSObject> {
+        let mut stack = vec![self];
+        std::iter::from_fn(move || {
+            if let Some(current) = stack.pop() {
+                if let Some(ref content) = current.content {
+                    stack.extend(content.iter());
+                }
+                Some(current)
+            } else {
+                None
+            }
+        })
+    }
+
+    /// Return iterator over each FSObject that is a file
+    pub fn file_iter(&self) -> impl Iterator<Item=&FSObject> {
+        let mut stack = vec![self];
+        std::iter::from_fn(move || {
+            while let Some(current) = stack.pop() {
+                if current.is_file() {
+                    return Some(current); // Return the current object if it is a file
+                } else {
+                    if let Some(ref content) = current.content {
+                        stack.extend(content.iter());
+                    }
+                }
+            }
+            None
+        })
+    }
+
+    /// Return iterator over each FSObject that is a directory
+    pub fn dir_iter(&self) -> impl Iterator<Item=&FSObject> {
+        let mut stack = vec![self];
+        std::iter::from_fn(move || {
+            while let Some(current) = stack.pop() {
+                if current.is_dir() {
+                    // Return the current directory object
+                    if let Some(ref content) = current.content {
+                        // Push content of directories to stack
+                        stack.extend(content.iter());
+                    }
+                    return Some(current);
+                } else if let Some(ref content) = current.content {
+                    // Push content of directories to stack
+                    stack.extend(content.iter());
+                }
+            }
+            None
+        })
+    }
+
+    // Return iterator over each FSObject that is a symbolic link
+    // pub fn symlink_iter(&self) -> impl Iterator<Item=&FSObject> {
+    //     todo!() // not implemented yet.
+    // }
 }
 
 /// Scan vector of PathBuf recursively into FSObject

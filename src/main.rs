@@ -10,15 +10,12 @@ use std::sync::Arc;
 #[tokio::main]
 async fn main() {
     let mut cli_args = cli_args::Args::parse();
-    if cli_args.prepare_data().is_err() {
-        return;
-    }
 
-    if cli_args.paths.is_empty() {
-        return;
-    }
+    if cli_args.prepare_data().is_err() { return; }
 
-    // Get file tree
+    if cli_args.paths.is_empty() { return; }
+
+    // Get files tree
     let fs_objects = match content_recursively(&cli_args.paths) {
         Ok(content) => content,
         Err(err) => {
@@ -27,7 +24,35 @@ async fn main() {
         }
     };
 
-    println!("Obtained {} FSObjects", cli_args.paths.len());
+    // print the names of all files that will be shared
+    #[cfg(debug_assertions)] {
+        for _ in 0..50 { print!("-") };
+        println!("\n\n");
+
+        println!("list of obtained files:");
+        for (num, obj) in fs_objects.first().unwrap().file_iter().enumerate() {
+            println!("\t{num}. {}", obj.name());
+        }
+
+        for _ in 0..50 { print!("-") };
+        println!("\n\n");
+
+        println!("list of obtained dirs:");
+        for (num, obj) in fs_objects.first().unwrap().dir_iter().enumerate() {
+            println!("\t{num}. {}", obj.name());
+        }
+
+        for _ in 0..50 { print!("-") };
+        println!("\n\n");
+
+        println!("list of the all FSObjects:");
+        for (num, obj) in fs_objects.first().unwrap().recursive_iter().enumerate() {
+            println!("\t{num}. {}", obj.name());
+        }
+
+        for _ in 0..50 { print!("-") };
+        println!("\n\n");
+    }
 
     let files_html_page: Html<String>;
 
@@ -38,8 +63,8 @@ async fn main() {
         files_html_page = Html(html_page::html_page(&fs_objects));
         println!(" OK");
 
-        #[cfg(debug_assertions)]
-        println!("{}", html_page::html_page(&fs_objects));
+        // #[cfg(debug_assertions)]
+        // println!("{}", html_page::html_page(&fs_objects));
     }
     //----------------------------------------------
     let listener = tokio::net::TcpListener::bind("127.0.0.1:3000")
