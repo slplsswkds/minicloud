@@ -1,6 +1,6 @@
 [package]
 name = "minicloud"
-version = "0.6.6"
+version = "0.7.0"
 edition = "2021"
 author = ["slplsswkds <slplsswkds@protonmail.com>"]
 
@@ -11,5 +11,6 @@ tokio = { version = "1.39", features = ["full"] }
 axum = { version = "0.7" }
 local-ip-address = "0.6"
 serde = { version = "1.0", features = ["derive"] }  # query requests
-#mime_guess = { version = "2.0.4" }
+tokio-util = { version = "0.7", features = ["io"] }
+#mime_guess = { version = "2.0" }
 #html = "0.6.3"
