@@ -1,9 +1,13 @@
 use std::{collections::HashMap, sync::Arc};
-use axum::{extract::{State, Query}, response::Html};
+use axum::{
+    extract::{State, Query},
+    response::{Html, IntoResponse},
+    http::StatusCode,
+};
 use crate::fs_object::FSObject;
 use serde::Deserialize;
 
-pub async fn root_handler(page: State<Arc<Html<String>>>) -> Html<String> {
+pub async fn root_handler(page: State<Arc<Html<String>>>) -> impl IntoResponse {
     (**page).clone()
 }
 
@@ -15,13 +19,15 @@ pub struct Params {
 pub async fn download_handler(
     state: State<Arc<HashMap<u64, Arc<FSObject>>>>,
     query: Query<Params>,
-) -> Html<String> {
-    match (**state).get(&query.id) {
-        Some(fs_obj) => {
-            Html(format!("required item: {}", fs_obj.name()).to_string())
+) -> impl IntoResponse {
+    let fs_object = match (**state).get(&query.id) {
+        Some(fs_obj) => fs_obj,
+        None => {
+            let err_msg = format!("Unexpected error. Item not found. ID = {}", &query.id);
+            return Err((StatusCode::NOT_FOUND, err_msg));
         }
-        None => Html(format!("Unexpected error. Item not found. ID = {}", &query.id))
-    }
+    };
+    Ok(Html(format!("required item: {}", fs_object.name()).to_string()))
 }
 
 // pub async fn root_handler(State(files): State<Vec<PathBuf>>) -> Html<String> {

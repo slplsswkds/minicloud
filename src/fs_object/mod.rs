@@ -22,7 +22,7 @@ use std::string::String;
 #[derive(Debug)]
 pub struct FSObject {
     /// Path to object
-    path: PathBuf,
+    pub path: PathBuf,
 
     /// Object metadata
     metadata: Metadata,
