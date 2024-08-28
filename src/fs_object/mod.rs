@@ -6,6 +6,7 @@ use std::{
     ffi::OsStr,
     io::Error,
     path::PathBuf,
+    hash::{DefaultHasher, Hash, Hasher},
 };
 
 #[cfg(target_family = "unix")]
@@ -15,7 +16,6 @@ use std::os::unix::fs::MetadataExt;
 use std::os::windows::prelude::*;
 
 use std::string::String;
-
 
 /// A file system element for building a directory tree in RAM and accessing metadata.
 #[derive(Debug)]
@@ -122,6 +122,20 @@ impl FSObject {
     pub fn symlink_iter(&self) -> impl Iterator<Item=&FSObject> {
         // !!!not implemented yet.
         std::iter::empty::<&FSObject>()
+    }
+
+    /// Return Hash of FSObject that are obtained with DefaultHasher
+    pub fn get_hash(&self) -> u64 {
+        let mut hasher = DefaultHasher::new();
+        self.hash(&mut hasher);
+        hasher.finish()
+    }
+}
+
+impl Hash for FSObject {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.path.hash(state);
+        self.content.hash(state);
     }
 }
 

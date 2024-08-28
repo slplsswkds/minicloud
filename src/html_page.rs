@@ -1,4 +1,6 @@
 //! This module created to generate HTML page with list of files in tree FSObject
+
+use std::collections::HashMap;
 use crate::fs_object::FSObject;
 
 pub fn html_page(fsobjects: &Vec<FSObject>) -> String {
@@ -125,34 +127,50 @@ pub fn unordered_list(files: &Vec<FSObject>) -> String {
 
 /// Returns the html code for the list from &[`Vec<FSObject>`]
 fn list_of_items(items: &Vec<FSObject>) -> String {
+    let mut hashes = HashMap::new();
+
     let mut list = String::new();
     for item in items.iter() {
         if item.is_dir() {
-            list += &list_item(&item);
+            list += &list_item(&item, &mut hashes);
             match &item.content {
                 Some(content) => list += &unordered_list(&content), // += list_of_items for non-tree
                 None => {}
             };
         } else {
-            list += &list_item(item);
+            list += &list_item(item, &mut hashes);
         }
     }
     list
 }
 
-/// Returns the html code for one list item
-fn list_item(item: &FSObject) -> String {
+/// Returns the html code for one list item and adds the key-value pair for that item to the HashMap
+fn list_item<'a>(item: &'a FSObject, hash_map: &mut HashMap<u64, &'a FSObject>) -> String {
     let list_item: String;
     if item.is_dir() {
         list_item = format!("<li>📁 {}</li>\n", item.name())
     } else if item.is_symlink() {
         list_item = format!("<li>🔗 {}</li>\n", item.name())
     } else {
-        list_item = format!("<li>🗋 {}, {}</li>\n", item.name(), item.size())
+        let hash_key = item.get_hash();
+        hash_map.insert(hash_key, item);
+
+        list_item = format!(
+            "<li>🗋 {}, {}</li>\n",
+            href(item.name().as_ref(), url_download_item(hash_key).as_ref()),
+            item.size()
+        )
     }
-    return list_item;
+    list_item
 }
 
-// fn href<T: AsRef<String>>(name: &T, uri: &T) -> String {
-//     format!("<a href=\"{}\">{}</a>", uri.as_ref(), name.as_ref())
-// }
+/// Create HTML href from Text and URL
+fn href(text: &str, url: &str) -> String {
+    format!("<a href=\"{}\">{}</a>", url, text)
+}
+
+/// Create URL to download item(file/folder) by its hash
+/// URL format: "/dl?id={}", where {} is Hash of FSObject
+fn url_download_item(hash: u64) -> String {
+    format!("/dl?id={}", hash)
+}
