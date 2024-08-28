@@ -2,10 +2,12 @@ mod cli_args;
 mod fs_object;
 mod html_page;
 
+use std::collections::HashMap;
 use axum::{routing::get, Router, extract::State, response::Html};
 use clap::Parser;
 use fs_object::content_recursively;
 use std::sync::Arc;
+use crate::fs_object::FSObject;
 
 #[tokio::main]
 async fn main() {
@@ -53,16 +55,20 @@ async fn main() {
         println!("\t\t{} symbolic links\n", total_symlinks);
     }
 
-    let files_html_page: Html<String>;
+    print!("Generating HTML...");
+    let (page, hash_map) = html_page::html_page(&fs_objects);
+    println!(" OK");
 
-    if cli_args.no_html {
-        println!("Html will not be generated");
-        files_html_page = Html("".to_string()); // empty page
-    } else {
-        print!("Generating HTML...");
-        files_html_page = Html(html_page::html_page(&fs_objects));
-        println!(" OK");
-    }
+    let mut app = Router::new();
+
+    app = app.route("/", get(root_handler)
+        .with_state(Arc::new(Html(page))),
+    );
+
+    app = app.route("/dl", get(download_handler)
+        .with_state(Arc::new(hash_map)),
+    );
+
 
     // #[cfg(debug_assertions)]
     // println!("{}", html_page::html_page(&fs_objects));
@@ -74,14 +80,16 @@ async fn main() {
 
     println!("\nlistening on 127.0.0.1:3000");
 
-    let app = Router::new()
-        .route("/", get(root_handler)
-            .with_state(Arc::new(files_html_page)),
-        );
-
     axum::serve(listener, app).await.unwrap();
 }
 
 async fn root_handler(page: State<Arc<Html<String>>>) -> Html<String> {
     (**page).clone()
+}
+
+async fn download_handler(
+    _state: State<Arc<HashMap<u64, Arc<FSObject>>>>,
+) -> Html<String> {
+    // Your handler logic here
+    Html("test string".to_string())
 }

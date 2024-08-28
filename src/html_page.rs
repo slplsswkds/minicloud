@@ -1,22 +1,22 @@
-//! This module created to generate HTML page with list of files in tree FSObject
-
 use std::collections::HashMap;
+use std::sync::Arc;
 use crate::fs_object::FSObject;
 
-pub fn html_page(fsobjects: &Vec<FSObject>) -> String {
-    format!(
+pub fn html_page(fsobjects: &Vec<Arc<FSObject>>) -> (String, HashMap<u64, Arc<FSObject>>) {
+    let (body, hash_map) = body(fsobjects);
+    let html = format!(
         "<!DOCTYPE html>
 <html>
 {}
 {}
 </html>",
         head(),
-        body(fsobjects)
-    )
+        body
+    );
+    (html, hash_map)
 }
 
 //------------------------------ Head elements -----------------------------------------------------
-/// Configure <title>, <style>, <meta>, <link>, <script>, and <base>. Not finished
 #[inline]
 fn head() -> String {
     format!(
@@ -107,45 +107,42 @@ fn script() -> String {
 
 #[inline]
 fn base() -> String {
-    //<base href="https://www.w3schools.com/" target="_blank">
     "".to_string()
 }
 
 //--------------------------------------------------------------------------------------------------
-pub fn body(fsobjects: &Vec<FSObject>) -> String {
-    format!("<body>
-    \r{}
-</body>", unordered_list(fsobjects)
-    )
+pub fn body(fsobjects: &Vec<Arc<FSObject>>) -> (String, HashMap<u64, Arc<FSObject>>) {
+    let (unordered_list, hash_map) = unordered_list(fsobjects);
+    (format!("<body>\n{}\n</body>", unordered_list), hash_map)
 }
 
-/// Returns html unordered list from [`Vec<FSObject>`] recursively
-pub fn unordered_list(files: &Vec<FSObject>) -> String {
-    let list_of_items = list_of_items(files);
-    format!("<ul>\n{}</ul>\n", list_of_items)
+/// Returns html unordered list from [`Vec<Arc<FSObject>>`] recursively
+pub fn unordered_list(files: &Vec<Arc<FSObject>>) -> (String, HashMap<u64, Arc<FSObject>>) {
+    let (list_of_items, hash_map) = list_of_items(files);
+    (format!("<ul>\n{}</ul>\n", list_of_items), hash_map)
 }
 
-/// Returns the html code for the list from &[`Vec<FSObject>`]
-fn list_of_items(items: &Vec<FSObject>) -> String {
-    let mut hashes = HashMap::new();
+/// Returns the html code for the list from &[`Vec<Arc<FSObject>>`]
+fn list_of_items(items: &Vec<Arc<FSObject>>) -> (String, HashMap<u64, Arc<FSObject>>) {
+    let mut hash_map = HashMap::new();
 
     let mut list = String::new();
     for item in items.iter() {
         if item.is_dir() {
-            list += &list_item(&item, &mut hashes);
-            match &item.content {
-                Some(content) => list += &unordered_list(&content), // += list_of_items for non-tree
-                None => {}
-            };
+            list += &list_item(&item, &mut hash_map);
+            if let Some(content) = &item.content {
+                let (unordered_list, _) = unordered_list(&content);
+                list += &unordered_list
+            }
         } else {
-            list += &list_item(item, &mut hashes);
+            list += &list_item(item, &mut hash_map);
         }
     }
-    list
+    (list, hash_map)
 }
 
 /// Returns the html code for one list item and adds the key-value pair for that item to the HashMap
-fn list_item<'a>(item: &'a FSObject, hash_map: &mut HashMap<u64, &'a FSObject>) -> String {
+fn list_item(item: &Arc<FSObject>, hash_map: &mut HashMap<u64, Arc<FSObject>>) -> String {
     let list_item: String;
     if item.is_dir() {
         list_item = format!("<li>📁 {}</li>\n", item.name())
@@ -153,7 +150,7 @@ fn list_item<'a>(item: &'a FSObject, hash_map: &mut HashMap<u64, &'a FSObject>) 
         list_item = format!("<li>🔗 {}</li>\n", item.name())
     } else {
         let hash_key = item.get_hash();
-        hash_map.insert(hash_key, item);
+        hash_map.insert(hash_key, Arc::clone(item));
 
         list_item = format!(
             "<li>🗋 {}, {}</li>\n",

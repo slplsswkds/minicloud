@@ -7,6 +7,7 @@ use std::{
     io::Error,
     path::PathBuf,
     hash::{DefaultHasher, Hash, Hasher},
+    sync::Arc,
 };
 
 #[cfg(target_family = "unix")]
@@ -28,7 +29,7 @@ pub struct FSObject {
 
     /// Contain contents of the folder.
     /// If this file or folder is empty - the value is None
-    pub content: Option<Vec<FSObject>>,
+    pub content: Option<Vec<Arc<FSObject>>>,
 }
 
 impl FSObject {
@@ -71,7 +72,7 @@ impl FSObject {
         std::iter::from_fn(move || {
             if let Some(current) = stack.pop() {
                 if let Some(ref content) = current.content {
-                    stack.extend(content.iter());
+                    stack.extend(content.iter().map(Arc::as_ref));
                 }
                 Some(current)
             } else {
@@ -89,7 +90,7 @@ impl FSObject {
                     return Some(current); // Return the current object if it is a file
                 } else {
                     if let Some(ref content) = current.content {
-                        stack.extend(content.iter());
+                        stack.extend(content.iter().map(Arc::as_ref));
                     }
                 }
             }
@@ -106,12 +107,12 @@ impl FSObject {
                     // Return the current directory object
                     if let Some(ref content) = current.content {
                         // Push content of directories to stack
-                        stack.extend(content.iter());
+                        stack.extend(content.iter().map(Arc::as_ref));
                     }
                     return Some(current);
                 } else if let Some(ref content) = current.content {
                     // Push content of directories to stack
-                    stack.extend(content.iter());
+                    stack.extend(content.iter().map(Arc::as_ref));
                 }
             }
             None
@@ -145,8 +146,8 @@ impl Hash for FSObject {
 /// - The user lacks permissions to perform metadata call on path.
 /// - path does not exist.
 
-pub fn content_recursively(paths: &Vec<PathBuf>) -> Result<Vec<FSObject>, Error> {
-    let mut fs_objects_root: Vec<FSObject> = Vec::new();
+pub fn content_recursively(paths: &Vec<PathBuf>) -> Result<Vec<Arc<FSObject>>, Error> {
+    let mut fs_objects_root: Vec<Arc<FSObject>> = Vec::new();
 
     for path in paths {
         let metadata;
@@ -156,8 +157,6 @@ pub fn content_recursively(paths: &Vec<PathBuf>) -> Result<Vec<FSObject>, Error>
                 Ok(metadata) => metadata,
                 Err(err) => {
                     eprintln!("{:?}: {err}", path);
-                    // let empty_vec: Vec<FSObject> = Vec::new();
-                    // return Ok(empty_vec);                       // not good...
                     continue; // skip file !!!!!!!!!!!!!!!!!!!!!! fix this in the future
                 }
             };
@@ -166,7 +165,7 @@ pub fn content_recursively(paths: &Vec<PathBuf>) -> Result<Vec<FSObject>, Error>
                 Ok(metadata) => metadata,
                 Err(err) => {
                     eprintln!("{:?}: {err}", path);
-                    let empty_vec: Vec<FSObject> = Vec::new();
+                    let empty_vec: Vec<Arc<FSObject>> = Vec::new();
                     return Ok(empty_vec);                       // not good...
                 }
             };
@@ -179,22 +178,21 @@ pub fn content_recursively(paths: &Vec<PathBuf>) -> Result<Vec<FSObject>, Error>
         };
 
         if path.is_dir() {
-            fs_object.content = Some(Vec::new());
             match read_dir_content(&path) {
                 Ok(dir_content) => {
                     if dir_content.len() > 0 {
-                        fs_object.content = Some(content_recursively(&dir_content).expect("MY_ERROR_1"))
+                        fs_object.content = Some(content_recursively(&dir_content)?);
                     }
                 }
                 Err(err) => {
                     eprintln!("{:?}: {err}", path);
-                    let empty_vec: Vec<FSObject> = Vec::new();
+                    let empty_vec: Vec<Arc<FSObject>> = Vec::new();
                     return Ok(empty_vec);
                 }
             }
         }
 
-        fs_objects_root.push(fs_object);
+        fs_objects_root.push(Arc::new(fs_object));
     }
     Ok(fs_objects_root)
 }
@@ -202,13 +200,13 @@ pub fn content_recursively(paths: &Vec<PathBuf>) -> Result<Vec<FSObject>, Error>
 /// Returns a list of files, directories, and symbolic links in a directory
 ///
 /// This function will return an error in the following situations, but is not limited to just these cases:
-/// - The provided path doesn’t exist.
+/// - The provided path doesn't exist.
 /// - The process lacks permissions to view the contents.
 /// - The path points at a non-directory file.
 fn read_dir_content(path: &PathBuf) -> Result<Vec<PathBuf>, Error> {
     let mut paths: Vec<PathBuf> = Vec::new();
 
-    for entry_result in fs::read_dir(path)? { // !!! handle this !!!. error begining is there
+    for entry_result in fs::read_dir(path)? { // !!! handle this !!!. error beginning is there
         let entry = entry_result.expect("MY_ERROR_3");
         paths.push(entry.path());
     }
