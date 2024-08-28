@@ -1,12 +1,28 @@
-// use std::path::PathBuf;
-// use axum::{
-//     body::StreamBody,
-//     http::{header, StatusCode},
-//     response::{Html, IntoResponse},
-//     extract::{State, Query},
-// };
-// use serde::Deserialize;
-// use tokio_util::io::ReaderStream;
+use std::{collections::HashMap, sync::Arc};
+use axum::{extract::{State, Query}, response::Html};
+use crate::fs_object::FSObject;
+use serde::Deserialize;
+
+pub async fn root_handler(page: State<Arc<Html<String>>>) -> Html<String> {
+    (**page).clone()
+}
+
+#[derive(Deserialize)]
+pub struct Params {
+    id: u64,
+}
+
+pub async fn download_handler(
+    state: State<Arc<HashMap<u64, Arc<FSObject>>>>,
+    query: Query<Params>,
+) -> Html<String> {
+    match (**state).get(&query.id) {
+        Some(fs_obj) => {
+            Html(format!("required item: {}", fs_obj.name()).to_string())
+        }
+        None => Html(format!("Unexpected error. Item not found. ID = {}", &query.id))
+    }
+}
 
 // pub async fn root_handler(State(files): State<Vec<PathBuf>>) -> Html<String> {
 //     let mut list = String::new();

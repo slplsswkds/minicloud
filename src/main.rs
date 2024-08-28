@@ -1,13 +1,13 @@
 mod cli_args;
 mod fs_object;
 mod html_page;
+mod server;
 
-use std::collections::HashMap;
-use axum::{routing::get, Router, extract::State, response::Html};
+use axum::{routing::get, Router, response::Html};
 use clap::Parser;
 use fs_object::content_recursively;
 use std::sync::Arc;
-use crate::fs_object::FSObject;
+use crate::server::*;
 
 #[tokio::main]
 async fn main() {
@@ -81,15 +81,4 @@ async fn main() {
     println!("\nlistening on 127.0.0.1:3000");
 
     axum::serve(listener, app).await.unwrap();
-}
-
-async fn root_handler(page: State<Arc<Html<String>>>) -> Html<String> {
-    (**page).clone()
-}
-
-async fn download_handler(
-    _state: State<Arc<HashMap<u64, Arc<FSObject>>>>,
-) -> Html<String> {
-    // Your handler logic here
-    Html("test string".to_string())
 }
