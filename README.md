@@ -1,4 +1,17 @@
-Commit 585be84 temporary are the last working version.
-!!! This version minicloud (585be84) can download files that have not been added to it as an argument, so it is recommended to use it on behalf of a user who does not have access to files other than those that are planned to be distributed
+### Update:
+* Version 0.9.0 (commit 37eefdc) does not contain the security issue of accessing files (as was the case in version 0.1.0 with commit 585be84) that were not distributed. This version may still have bugs, but it is ready to use for now.
 
-Next commits cannot upload files for now. I am gradually adding and rewriting the functionality of the program
+### Usage:
+* default usage: _minicloud ~/path/to/the/file/or/directory_
+* specify another port: _minicloud -p 65432 ~/your/path_
+* help: _minicloud --help_
+
+### Roadmap
+- [x] Scan files
+- [x] Scan directories
+- [ ] Scan symbolic links
+- [x] Generate an HTML page in the form of a tree
+- [x] Hashing items in the hyperlinks
+- [ ] Chunked downloading
+- [ ] Encrypting
+- [ ] Downloading the entire directory
