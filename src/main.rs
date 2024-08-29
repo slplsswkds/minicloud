@@ -59,6 +59,9 @@ async fn main() {
     let (page, hash_map) = html_page::html_page(&fs_objects);
     println!(" OK");
 
+
+    let hash_map_state = Arc::new(hash_map);
+
     let mut app = Router::new();
 
     app = app.route("/", get(root_handler)
@@ -66,9 +69,12 @@ async fn main() {
     );
 
     app = app.route("/dl", get(download_handler)
-        .with_state(Arc::new(hash_map)),
+        .with_state(hash_map_state.clone()),
     );
 
+    app = app.route("/pw", get(preview_handler)
+        .with_state(hash_map_state),
+    );
 
     // #[cfg(debug_assertions)]
     // println!("{}", html_page::html_page(&fs_objects));

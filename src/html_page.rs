@@ -159,9 +159,10 @@ fn list_item(item: &Arc<FSObject>, hash_map: &mut HashMap<u64, Arc<FSObject>>) -
         hash_map.insert(hash_key, Arc::clone(item));
 
         format!(
-            "<li>🗋 {}, {}</li>\n",
+            "<li>🗋 {}, {} {}</li>\n",
             href(item.name().as_ref(), url_download_item(hash_key).as_ref()),
-            item.size()
+            item.size(),
+            href("[view]", url_preview_item(hash_key).as_ref()),
         )
     }
 }
@@ -175,4 +176,10 @@ fn href(text: &str, url: &str) -> String {
 /// URL format: "/dl?id={}", where {} is Hash of FSObject
 fn url_download_item(hash: u64) -> String {
     format!("/dl?id={}", hash)
+}
+
+/// Create URL to preview item(file/folder) by its hash
+/// URL format: "/pw?id={}", where {} is Hash of FSObject
+fn url_preview_item(hash: u64) -> String {
+    format!("/pw?id={}", hash)
 }
