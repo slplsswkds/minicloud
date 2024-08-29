@@ -3,21 +3,22 @@
 use clap::Parser;
 use std::path::PathBuf;
 
-/// Store parsed values from CLI
+/// A program for transferring files between devices via HTTP with an HTML interface
+// Store parsed values from CLI
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 pub struct Args {
     /// Set directories and files that will be distributed
-    #[arg(short = 'p', long, value_delimiter = ',')]
+    #[arg(value_delimiter = ',')]
     pub paths: Vec<PathBuf>,
 
-    /// Display the absolute path to the files
+    /// Port number
+    #[arg(short = 'p', long, default_value_t = 42666)]
+    pub port: u16,
+
+    /// Use the absolute path to the files
     #[arg(short = 'c', long, default_value_t = false)]
     pub canonical: bool,
-
-    /// Turn of generating html file for WEB view
-    #[arg(short = 'n', long, default_value_t = false)]
-    pub no_html: bool,
 }
 
 impl Args {

@@ -3,6 +3,7 @@ mod fs_object;
 mod html_page;
 mod server;
 
+use std::net::SocketAddr;
 use axum::{routing::get, Router, response::Html};
 use clap::Parser;
 use fs_object::content_recursively;
@@ -59,7 +60,6 @@ async fn main() {
     let (page, hash_map) = html_page::html_page(&fs_objects);
     println!(" OK");
 
-
     let hash_map_state = Arc::new(hash_map);
 
     let mut app = Router::new();
@@ -76,15 +76,13 @@ async fn main() {
         .with_state(hash_map_state),
     );
 
-    // #[cfg(debug_assertions)]
-    // println!("{}", html_page::html_page(&fs_objects));
-
     //----------------------------------------------
-    let listener = tokio::net::TcpListener::bind("127.0.0.1:3000")
-        .await
-        .unwrap();
 
-    println!("\nlistening on 127.0.0.1:3000");
+    let local_ip = local_ip_address::local_ip().unwrap();
+    let socket_addr = SocketAddr::new(local_ip, cli_args.port);
+    let listener = tokio::net::TcpListener::bind(socket_addr);
 
-    axum::serve(listener, app).await.unwrap();
+    println!("\nlistening on {}:{}", socket_addr.ip(), socket_addr.port());
+
+    axum::serve(listener.await.unwrap(), app).await.unwrap();
 }
