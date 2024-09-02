@@ -13,5 +13,7 @@
 - [x] Generate an HTML page in the form of a tree
 - [x] Hashing items in the hyperlinks
 - [ ] Chunked downloading
-- [ ] Encrypting
+- [ ] Android support
+- [x] Linux support
+- [x] Windows support
 - [ ] Downloading the entire directory
