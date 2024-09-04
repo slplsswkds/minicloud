@@ -1,12 +1,13 @@
 mod cli_args;
 mod fs_object;
+mod storage;
 mod html_page;
 mod server;
 
 use std::net::SocketAddr;
 use axum::{routing::get, Router, response::Html};
 use clap::Parser;
-use fs_object::content_recursively;
+use storage::content_recursively;
 use std::sync::Arc;
 use crate::server::*;
 
