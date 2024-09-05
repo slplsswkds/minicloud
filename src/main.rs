@@ -63,19 +63,10 @@ async fn main() {
 
     let hash_map_state = Arc::new(hash_map);
 
-    let mut app = Router::new();
-
-    app = app.route("/", get(root_handler)
-        .with_state(Arc::new(Html(page))),
-    );
-
-    app = app.route("/dl", get(download_handler)
-        .with_state(hash_map_state.clone()),
-    );
-
-    app = app.route("/pw", get(preview_handler)
-        .with_state(hash_map_state),
-    );
+    let app = Router::new()
+        .route("/", get(root_handler).with_state(Arc::new(Html(page))))
+        .route("/dl", get(download_handler).with_state(hash_map_state.clone()))
+        .route("/pw", get(preview_handler).with_state(hash_map_state));
 
     //----------------------------------------------
 

@@ -1,7 +1,7 @@
 use std::{
     fs,
     io::Error,
-    path::PathBuf,
+    path::{PathBuf, Path},
     sync::Arc,
 };
 use crate::fs_object::FSObject;
@@ -11,30 +11,17 @@ use crate::fs_object::FSObject;
 /// This function will return an error in the following situations, but is not limited to just these cases:
 /// - The user lacks permissions to perform metadata call on path.
 /// - path does not exist.
-pub fn content_recursively(paths: &Vec<PathBuf>) -> Result<Vec<Arc<FSObject>>, Error> {
+pub fn content_recursively(paths: &[PathBuf]) -> Result<Vec<Arc<FSObject>>, Error> {
     let mut fs_objects_root: Vec<Arc<FSObject>> = Vec::new();
 
     for path in paths {
-        let metadata;
-
-        if path.is_symlink() {
-            metadata = match path.symlink_metadata() {
-                Ok(metadata) => metadata,
-                Err(err) => {
-                    eprintln!("{:?}: {err}", path);
-                    continue; // skip file !!!!!!!!!!!!!!!!!!!!!! fix this in the future
-                }
-            };
-        } else {
-            metadata = match path.metadata() {
-                Ok(metadata) => metadata,
-                Err(err) => {
-                    eprintln!("{:?}: {err}", path);
-                    let empty_vec: Vec<Arc<FSObject>> = Vec::new();
-                    return Ok(empty_vec);                       // not good...
-                }
-            };
-        }
+        let metadata = match get_metadata(path) {
+            Ok(metadata) => metadata,
+            Err(err) => {
+                eprintln!("{:?}: {err}", path);
+                continue; // логіку продовжено
+            }
+        };
 
         let mut fs_object = FSObject {
             path: path.clone(),
@@ -43,16 +30,15 @@ pub fn content_recursively(paths: &Vec<PathBuf>) -> Result<Vec<Arc<FSObject>>, E
         };
 
         if path.is_dir() {
-            match read_dir_content(&path) {
+            match read_dir_content(path) {
                 Ok(dir_content) => {
-                    if dir_content.len() > 0 {
+                    if !dir_content.is_empty() {
                         fs_object.content = Some(content_recursively(&dir_content)?);
                     }
                 }
                 Err(err) => {
                     eprintln!("{:?}: {err}", path);
-                    let empty_vec: Vec<Arc<FSObject>> = Vec::new();
-                    return Ok(empty_vec);
+                    continue; // пропустимо директорію з помилками
                 }
             }
         }
@@ -68,13 +54,23 @@ pub fn content_recursively(paths: &Vec<PathBuf>) -> Result<Vec<Arc<FSObject>>, E
 /// - The provided path doesn't exist.
 /// - The process lacks permissions to view the contents.
 /// - The path points at a non-directory file.
-fn read_dir_content(path: &PathBuf) -> Result<Vec<PathBuf>, Error> {
-    let mut paths: Vec<PathBuf> = Vec::new();
+fn read_dir_content(path: &Path) -> Result<Vec<PathBuf>, Error> {
+    fs::read_dir(path)?
+        .filter_map(|entry| match entry {
+            Ok(e) => Some(Ok(e.path())),
+            Err(e) => {
+                eprintln!("Error reading directory entry: {e}");
+                None
+            }
+        })
+        .collect()
+}
 
-    for entry_result in fs::read_dir(path)? { // !!! handle this !!!. error beginning is there
-        let entry = entry_result.expect("MY_ERROR_3");
-        paths.push(entry.path());
+/// Gets metadata for a given path (handling symbolic links)
+fn get_metadata(path: &Path) -> Result<fs::Metadata, Error> {
+    if path.is_symlink() {
+        path.symlink_metadata()
+    } else {
+        path.metadata()
     }
-
-    Ok(paths)
 }
