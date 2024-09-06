@@ -15,7 +15,7 @@ use crate::server::*;
 async fn main() {
     let mut cli_args = cli_args::Args::parse();
 
-    if cli_args.prepare_data().is_err() { return; }
+    if cli_args.prepare_paths().is_err() { return; }
 
     if cli_args.paths.is_empty() { return; }
 

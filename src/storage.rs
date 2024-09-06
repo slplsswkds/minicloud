@@ -19,7 +19,7 @@ pub fn content_recursively(paths: &[PathBuf]) -> Result<Vec<Arc<FSObject>>, Erro
             Ok(metadata) => metadata,
             Err(err) => {
                 eprintln!("{:?}: {err}", path);
-                continue; // логіку продовжено
+                continue; // skip path
             }
         };
 
@@ -38,7 +38,7 @@ pub fn content_recursively(paths: &[PathBuf]) -> Result<Vec<Arc<FSObject>>, Erro
                 }
                 Err(err) => {
                     eprintln!("{:?}: {err}", path);
-                    continue; // пропустимо директорію з помилками
+                    continue; // skip directory with errors
                 }
             }
         }
@@ -56,11 +56,13 @@ pub fn content_recursively(paths: &[PathBuf]) -> Result<Vec<Arc<FSObject>>, Erro
 /// - The path points at a non-directory file.
 fn read_dir_content(path: &Path) -> Result<Vec<PathBuf>, Error> {
     fs::read_dir(path)?
-        .filter_map(|entry| match entry {
-            Ok(e) => Some(Ok(e.path())),
-            Err(e) => {
-                eprintln!("Error reading directory entry: {e}");
-                None
+        .filter_map(|entry| {
+            match entry {
+                Ok(dir_entry) => Some(Ok(dir_entry.path())),
+                Err(err) => {
+                    eprintln!("Error reading directory entry: {err}. Skipping...");
+                    None
+                }
             }
         })
         .collect()

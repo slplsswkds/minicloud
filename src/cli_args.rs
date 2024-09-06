@@ -20,19 +20,17 @@ pub struct Args {
 
 impl Args {
     /// Prepare vector of paths for using. Remove wrong paths and print errors.
-    pub fn prepare_data(&mut self) -> Result<(), ()> {
-        if self.canonical {
-            self.canonicalize_paths();
-        } else {
-            self.remove_inaccessible_paths()
-                .iter()
-                .for_each(|wrong_path| {
-                    eprintln!("Error: Path {:?} does not exist", wrong_path);
-                });
-        }
+    pub fn prepare_paths(&mut self) -> Result<(), ()> {
+        let wrong_paths = self.canonicalize_paths();
+
+        wrong_paths
+            .map_err(|err| {
+                err.iter().for_each(|(path, err)| {
+                    eprintln!("Error: {:?} {:?}", path, err.to_string());
+                })
+            })?;
 
         self.remove_repeated_paths();
-
         Ok(())
     }
 
@@ -42,35 +40,21 @@ impl Args {
         self.paths.dedup();
     }
 
-    /// Returns a vector of paths that do not exist in the file system or cannot be accessed.
-    ///
-    /// This function will traverse the symbolic links to get information about the target file.
-    /// If you cannot access the file's metadata, e.g. g. due to a permission error or faulty symlinks,
-    /// this will copy the path into a vector of wrong paths
-    fn remove_inaccessible_paths(&mut self) -> Vec<PathBuf> {
-        let mut wrong_paths = Vec::new();
-
-        self
-            .paths
-            .retain(|path| {
-                if path.exists() {
-                    true
-                } else {
-                    wrong_paths.push(path.clone());
-                    false
-                }
-            });
-
-        wrong_paths
-    }
-
     /// Canonicalize all paths
-    fn canonicalize_paths(&mut self) {
-        for path in self.paths.iter_mut() {
-            match path.canonicalize() {
-                Ok(canonical_path) => *path = canonical_path,
-                Err(e) => eprintln!("Warning: Could not canonicalize path {:?}: {}", path, e),
-            }
+    ///
+    /// Returns (paths, error) that cannot be canonicalized
+    fn canonicalize_paths(&mut self) -> Result<(), Vec<(PathBuf, std::io::Error)>> {
+        let wrong_paths: Vec<(PathBuf, std::io::Error)> = self
+            .paths
+            .iter()
+            .filter_map(|path| {
+                path.canonicalize().err().map(|err| (path.clone(), err))
+            })
+            .collect();
+
+        match wrong_paths.is_empty() {
+            true => Ok(()),
+            false => Err(wrong_paths)
         }
     }
 }
