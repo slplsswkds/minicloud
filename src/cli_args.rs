@@ -12,10 +12,6 @@ pub struct Args {
     /// Port number
     #[arg(short = 'p', long, default_value_t = 42666)]
     pub port: u16,
-
-    /// Use the absolute path to the files
-    #[arg(short = 'c', long, default_value_t = false)]
-    pub canonical: bool,
 }
 
 impl Args {
