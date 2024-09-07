@@ -17,7 +17,6 @@ use std::os::windows::prelude::*;
 use std::string::String;
 
 /// A file system element for building a directory tree in RAM and accessing metadata.
-#[derive(Debug)]
 pub struct FSObject {
     /// Path to object
     pub path: PathBuf,
@@ -136,4 +135,32 @@ impl Hash for FSObject {
         self.path.hash(state);
         self.content.hash(state);
     }
+}
+
+#[cfg(debug_assertions)]
+pub fn show_fs_objects_summary(fs_objects: &Vec<Arc<FSObject>>) {
+    let total_elements: usize = fs_objects
+        .iter()
+        .map(|fs_obj| fs_obj.recursive_iter().count())
+        .sum();
+
+    let total_files: usize = fs_objects
+        .iter()
+        .map(|fs_obj| fs_obj.file_iter().count())
+        .sum();
+
+    let total_directories: usize = fs_objects
+        .iter()
+        .map(|fs_obj| fs_obj.dir_iter().count())
+        .sum();
+
+    let total_symlinks: usize = fs_objects
+        .iter()
+        .map(|fs_obj| fs_obj.symlink_iter().count())
+        .sum();
+
+    println!("\nObtained:\t{} elements, where:", total_elements);
+    println!("\t\t{} files", total_files);
+    println!("\t\t{} directories", total_directories);
+    println!("\t\t{} symbolic links\n", total_symlinks);
 }

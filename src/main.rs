@@ -9,6 +9,7 @@ use axum::{routing::get, Router, response::Html};
 use clap::Parser;
 use storage::content_recursively;
 use std::sync::Arc;
+use crate::fs_object::show_fs_objects_summary;
 use crate::server::*;
 
 #[tokio::main]
@@ -30,32 +31,7 @@ async fn main() {
 
     // Debug info about obtained files, directories, and symbolic links
     #[cfg(debug_assertions)]
-    {
-        let total_elements: usize = fs_objects
-            .iter()
-            .map(|fs_obj| fs_obj.recursive_iter().count())
-            .sum();
-
-        let total_files: usize = fs_objects
-            .iter()
-            .map(|fs_obj| fs_obj.file_iter().count())
-            .sum();
-
-        let total_directories: usize = fs_objects
-            .iter()
-            .map(|fs_obj| fs_obj.dir_iter().count())
-            .sum();
-
-        let total_symlinks: usize = fs_objects
-            .iter()
-            .map(|fs_obj| fs_obj.symlink_iter().count())
-            .sum();
-
-        println!("\nObtained:\t{} elements, where:", total_elements);
-        println!("\t\t{} files", total_files);
-        println!("\t\t{} directories", total_directories);
-        println!("\t\t{} symbolic links\n", total_symlinks);
-    }
+    show_fs_objects_summary(&fs_objects);
 
     print!("Generating HTML...");
     let (page, hash_map) = html_page::html_page(&fs_objects);
