@@ -137,7 +137,6 @@ impl Hash for FSObject {
     }
 }
 
-#[cfg(debug_assertions)]
 pub fn show_fs_objects_summary(fs_objects: &Vec<Arc<FSObject>>) {
     let total_elements: usize = fs_objects
         .iter()

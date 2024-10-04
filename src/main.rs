@@ -29,8 +29,7 @@ async fn main() {
         }
     };
 
-    // Debug info about obtained files, directories, and symbolic links
-    #[cfg(debug_assertions)]
+    // Info about obtained files, directories, and symbolic links
     show_fs_objects_summary(&fs_objects);
 
     print!("Generating HTML...");
