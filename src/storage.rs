@@ -4,15 +4,15 @@ use std::{
     path::{PathBuf, Path},
     sync::Arc,
 };
-use crate::fs_object::FSObject;
+use crate::fs_object::{FSObject, FsObjects};
 
 /// Scan vector of PathBuf recursively into FSObject
 ///
 /// This function will return an error in the following situations, but is not limited to just these cases:
 /// - The user lacks permissions to perform metadata call on path.
 /// - path does not exist.
-pub fn content_recursively(paths: &[PathBuf]) -> Result<Vec<Arc<FSObject>>, Error> {
-    let mut fs_objects_root: Vec<Arc<FSObject>> = Vec::new();
+pub fn content_recursively(paths: &[PathBuf]) -> Result<FsObjects, Error> {
+    let mut fs_objects_root: FsObjects = Vec::new();
 
     for path in paths {
         let metadata = match get_metadata(path) {

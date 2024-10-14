@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 use std::sync::Arc;
-use crate::fs_object::FSObject;
+use crate::fs_object::{FSObject, FsObjects};
 
-pub fn html_page(fsobjects: &Vec<Arc<FSObject>>) -> (String, HashMap<u64, Arc<FSObject>>) {
+pub fn html_page(fsobjects: &FsObjects) -> (String, HashMap<u64, Arc<FSObject>>) {
     let (body, hash_map) = body(fsobjects);
     let html = format!(
         "<!DOCTYPE html>
@@ -111,24 +111,24 @@ fn base() -> String {
 }
 
 //--------------------------------------------------------------------------------------------------
-pub fn body(fsobjects: &Vec<Arc<FSObject>>) -> (String, HashMap<u64, Arc<FSObject>>) {
+pub fn body(fsobjects: &FsObjects) -> (String, HashMap<u64, Arc<FSObject>>) {
     let mut hash_map = HashMap::new();
     let unordered_list = unordered_list(fsobjects, &mut hash_map);
     (format!("<body>\n{}\n</body>", unordered_list), hash_map)
 }
 
-/// Returns html unordered list from [`Vec<Arc<FSObject>>`] recursively
+/// Returns html unordered list from [`FsObjects`] recursively
 pub fn unordered_list(
-    files: &Vec<Arc<FSObject>>,
+    files: &FsObjects,
     hash_map: &mut HashMap<u64, Arc<FSObject>>
 ) -> String {
     let list_of_items = list_of_items(files, hash_map);
     format!("<ul>\n{}</ul>\n", list_of_items)
 }
 
-/// Returns the html code for the list from &[`Vec<Arc<FSObject>>`]
+/// Returns the html code for the list from &[`FsObjects`]
 fn list_of_items(
-    items: &Vec<Arc<FSObject>>,
+    items: &FsObjects,
     hash_map: &mut HashMap<u64, Arc<FSObject>>
 ) -> String {
     let mut list = String::new();

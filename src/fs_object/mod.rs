@@ -16,6 +16,8 @@ use std::os::windows::prelude::*;
 
 use std::string::String;
 
+pub type FsObjects = Vec<Arc<FSObject>>;
+
 /// A file system element for building a directory tree in RAM and accessing metadata.
 pub struct FSObject {
     /// Path to object
@@ -26,7 +28,7 @@ pub struct FSObject {
 
     /// Contain contents of the folder.
     /// If this file or folder is empty - the value is None
-    pub content: Option<Vec<Arc<FSObject>>>,
+    pub content: Option<FsObjects>,
 }
 
 impl FSObject {
@@ -137,7 +139,7 @@ impl Hash for FSObject {
     }
 }
 
-pub fn show_fs_objects_summary(fs_objects: &Vec<Arc<FSObject>>) {
+pub fn show_fs_objects_summary(fs_objects: &FsObjects) {
     let total_elements: usize = fs_objects
         .iter()
         .map(|fs_obj| fs_obj.recursive_iter().count())
