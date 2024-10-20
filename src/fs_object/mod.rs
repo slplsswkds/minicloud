@@ -32,6 +32,10 @@ pub struct FSObject {
 }
 
 impl FSObject {
+    pub fn new(path: PathBuf, metadata: Metadata, content: Option<FsObjects>) -> Self {
+        Self { path, metadata, content }
+    }
+
     pub fn is_file(&self) -> bool {
         self.metadata.is_file()
     }

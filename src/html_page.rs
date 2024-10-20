@@ -120,7 +120,7 @@ pub fn body(fsobjects: &FsObjects) -> (String, HashMap<u64, Arc<FSObject>>) {
 /// Returns html unordered list from [`FsObjects`] recursively
 pub fn unordered_list(
     files: &FsObjects,
-    hash_map: &mut HashMap<u64, Arc<FSObject>>
+    hash_map: &mut HashMap<u64, Arc<FSObject>>,
 ) -> String {
     let list_of_items = list_of_items(files, hash_map);
     format!("<ul>\n{}</ul>\n", list_of_items)
@@ -129,7 +129,7 @@ pub fn unordered_list(
 /// Returns the html code for the list from &[`FsObjects`]
 fn list_of_items(
     items: &FsObjects,
-    hash_map: &mut HashMap<u64, Arc<FSObject>>
+    hash_map: &mut HashMap<u64, Arc<FSObject>>,
 ) -> String {
     let mut list = String::new();
 

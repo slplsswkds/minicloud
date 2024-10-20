@@ -18,16 +18,11 @@ async fn main() {
 
     if cli_args.prepare_paths().is_err() { return; }
 
-    if cli_args.paths.is_empty() { return; }
-
     // Get files tree
-    let fs_objects = match content_recursively(&cli_args.paths) {
-        Ok(content) => content,
-        Err(err) => {
-            eprintln!("Error: {:?}", err);
-            return; // close minicloud
-        }
-    };
+    let fs_objects = content_recursively(&cli_args.paths)
+        .unwrap_or_else(|err| {
+            panic!("{err}") // close minicloud
+        });
 
     // Info about obtained files, directories, and symbolic links
     show_fs_objects_summary(&fs_objects);

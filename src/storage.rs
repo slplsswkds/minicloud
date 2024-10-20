@@ -23,11 +23,7 @@ pub fn content_recursively(paths: &[PathBuf]) -> Result<FsObjects, Error> {
             }
         };
 
-        let mut fs_object = FSObject {
-            path: path.clone(),
-            metadata,
-            content: None,
-        };
+        let mut fs_object = FSObject::new(path.clone(), metadata, None);
 
         if path.is_dir() {
             match read_dir_content(path) {
