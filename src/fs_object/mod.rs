@@ -48,7 +48,7 @@ impl FSObject {
         self.path
             .file_name()
             .and_then(OsStr::to_str)
-            .expect("Failed to retrieve file name")
+            .expect(&format!("Failed to retrieve file name: {:?}", &self.path))
     }
 
     pub fn size(&self) -> String {
@@ -60,7 +60,9 @@ impl FSObject {
         }
 
         #[cfg(target_family = "windows")]
-        return self.metadata.file_size();
+        {
+            size_string = format!("{} kB", self.metadata.file_size() / 1000);
+        }
 
         size_string
     }
