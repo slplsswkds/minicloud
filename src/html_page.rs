@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 use std::sync::Arc;
-use crate::fs_object::{FSObject, FsObjects};
+use crate::fs_object::{FsObject, FsObjects};
 
-pub fn html_page(fsobjects: &FsObjects) -> (String, HashMap<u64, Arc<FSObject>>) {
+pub fn html_page(fsobjects: &FsObjects) -> (String, HashMap<u64, Arc<FsObject>>) {
     let (body, hash_map) = body(fsobjects);
     let html = format!(
         "<!DOCTYPE html>
@@ -111,7 +111,7 @@ fn base() -> String {
 }
 
 //--------------------------------------------------------------------------------------------------
-pub fn body(fsobjects: &FsObjects) -> (String, HashMap<u64, Arc<FSObject>>) {
+pub fn body(fsobjects: &FsObjects) -> (String, HashMap<u64, Arc<FsObject>>) {
     let mut hash_map = HashMap::new();
     let unordered_list = unordered_list(fsobjects, &mut hash_map);
     (format!("<body>\n{}\n</body>", unordered_list), hash_map)
@@ -120,7 +120,7 @@ pub fn body(fsobjects: &FsObjects) -> (String, HashMap<u64, Arc<FSObject>>) {
 /// Returns html unordered list from [`FsObjects`] recursively
 pub fn unordered_list(
     files: &FsObjects,
-    hash_map: &mut HashMap<u64, Arc<FSObject>>,
+    hash_map: &mut HashMap<u64, Arc<FsObject>>,
 ) -> String {
     let list_of_items = list_of_items(files, hash_map);
     format!("<ul>\n{}</ul>\n", list_of_items)
@@ -129,7 +129,7 @@ pub fn unordered_list(
 /// Returns the html code for the list from &[`FsObjects`]
 fn list_of_items(
     items: &FsObjects,
-    hash_map: &mut HashMap<u64, Arc<FSObject>>,
+    hash_map: &mut HashMap<u64, Arc<FsObject>>,
 ) -> String {
     let mut list = String::new();
 
@@ -149,7 +149,7 @@ fn list_of_items(
 }
 
 /// Returns the html code for one list item and adds the key-value pair for that item to the HashMap
-fn list_item(item: &Arc<FSObject>, hash_map: &mut HashMap<u64, Arc<FSObject>>) -> String {
+fn list_item(item: &Arc<FsObject>, hash_map: &mut HashMap<u64, Arc<FsObject>>) -> String {
     if item.is_dir() {
         format!("<li>📁 {}</li>\n", item.name())
     } else if item.is_symlink() {

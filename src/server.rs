@@ -5,7 +5,7 @@ use axum::{
     http::{StatusCode, HeaderMap, header},
     body::Body,
 };
-use crate::fs_object::FSObject;
+use crate::fs_object::FsObject;
 use serde::Deserialize;
 use tokio_util::io::ReaderStream;
 
@@ -22,9 +22,9 @@ pub struct Params {
 /// Gets an FSObject from a HashMap based on the hash and creates a file read stream
 /// and returns the stream and FSObject
 async fn prepare_response(
-    state: &Arc<HashMap<u64, Arc<FSObject>>>,
+    state: &Arc<HashMap<u64, Arc<FsObject>>>,
     query: &Query<Params>,
-) -> Result<(Arc<FSObject>, ReaderStream<tokio::fs::File>), (StatusCode, String)> {
+) -> Result<(Arc<FsObject>, ReaderStream<tokio::fs::File>), (StatusCode, String)> {
     let fs_object = match state.get(&query.id) {
         Some(fs_obj) => fs_obj.clone(),
         None => {
@@ -44,7 +44,7 @@ async fn prepare_response(
 }
 
 pub async fn download_handler(
-    state: State<Arc<HashMap<u64, Arc<FSObject>>>>,
+    state: State<Arc<HashMap<u64, Arc<FsObject>>>>,
     query: Query<Params>,
 ) -> Result<impl IntoResponse, (StatusCode, String)> {
     let (fs_object, stream) = prepare_response(&state, &query).await?;
@@ -63,7 +63,7 @@ pub async fn download_handler(
 }
 
 pub async fn preview_handler(
-    state: State<Arc<HashMap<u64, Arc<FSObject>>>>,
+    state: State<Arc<HashMap<u64, Arc<FsObject>>>>,
     query: Query<Params>,
 ) -> impl IntoResponse {
     let (fs_object, stream) = prepare_response(&state, &query).await?;

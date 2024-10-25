@@ -16,10 +16,10 @@ use std::os::windows::prelude::*;
 
 use std::string::String;
 
-pub type FsObjects = Vec<Arc<FSObject>>;
+pub type FsObjects = Vec<Arc<FsObject>>;
 
 /// A file system element for building a directory tree in RAM and accessing metadata.
-pub struct FSObject {
+pub struct FsObject {
     /// Path to object
     pub path: PathBuf,
 
@@ -31,7 +31,7 @@ pub struct FSObject {
     pub content: Option<FsObjects>,
 }
 
-impl FSObject {
+impl FsObject {
     pub fn new(path: PathBuf, metadata: Metadata, content: Option<FsObjects>) -> Self {
         Self { path, metadata, content }
     }
@@ -72,7 +72,7 @@ impl FSObject {
     }
 
     /// Return iterator over each FSObject
-    pub fn recursive_iter(&self) -> impl Iterator<Item=&FSObject> {
+    pub fn recursive_iter(&self) -> impl Iterator<Item=&FsObject> {
         let mut stack = vec![self];
         std::iter::from_fn(move || {
             if let Some(current) = stack.pop() {
@@ -87,7 +87,7 @@ impl FSObject {
     }
 
     /// Return iterator over each FSObject that is a file
-    pub fn file_iter(&self) -> impl Iterator<Item=&FSObject> {
+    pub fn file_iter(&self) -> impl Iterator<Item=&FsObject> {
         let mut stack = vec![self];
         std::iter::from_fn(move || {
             while let Some(current) = stack.pop() {
@@ -104,7 +104,7 @@ impl FSObject {
     }
 
     /// Return iterator over each FSObject that is a directory
-    pub fn dir_iter(&self) -> impl Iterator<Item=&FSObject> {
+    pub fn dir_iter(&self) -> impl Iterator<Item=&FsObject> {
         let mut stack = vec![self];
         std::iter::from_fn(move || {
             while let Some(current) = stack.pop() {
@@ -125,9 +125,20 @@ impl FSObject {
     }
 
     /// Return iterator over each FSObject that is a symbolic link. Not ready yet!
-    pub fn symlink_iter(&self) -> impl Iterator<Item=&FSObject> {
-        // !!!not implemented yet.
-        std::iter::empty::<&FSObject>()
+    pub fn symlink_iter(&self) -> impl Iterator<Item=&FsObject> {
+        let mut stack = vec![self];
+        std::iter::from_fn(move || {
+            while let Some(current) = stack.pop() {
+                if current.is_symlink() {
+                    return Some(current); // Return the current object if it is a file
+                } else {
+                    if let Some(ref content) = current.content {
+                        stack.extend(content.iter().map(Arc::as_ref));
+                    }
+                }
+            }
+            None
+        })
     }
 
     /// Return Hash of FSObject that are obtained with DefaultHasher
@@ -138,7 +149,7 @@ impl FSObject {
     }
 }
 
-impl Hash for FSObject {
+impl Hash for FsObject {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.path.hash(state);
         self.content.hash(state);

@@ -4,7 +4,7 @@ use std::{
     path::{PathBuf, Path},
     sync::Arc,
 };
-use crate::fs_object::{FSObject, FsObjects};
+use crate::fs_object::{FsObject, FsObjects};
 
 /// Recursively scans a vector of PathBuf and constructs a vector of FSObject.
 ///
@@ -29,7 +29,7 @@ pub fn content_recursively(paths: &[PathBuf]) -> Result<FsObjects> {
 }
 
 /// Processes a single PathBuf to retrieve its metadata and, if it's a directory,
-/// recursively scans its contents into an [`FSObject`].
+/// recursively scans its contents into an [`FsObject`].
 ///
 /// This function attempts to obtain the metadata for the specified path and create
 /// an FSObject instance. If the path is a directory, it reads the contents and
@@ -41,11 +41,13 @@ pub fn content_recursively(paths: &[PathBuf]) -> Result<FsObjects> {
 ///
 /// The function returns a Result containing the constructed FSObject on success,
 /// or an error if the path processing fails.
-fn process_single_path(path: &Path) -> Result<FSObject> {
+fn process_single_path(path: &Path) -> Result<FsObject> {
     let metadata = get_metadata(path)?;
-    let mut fs_object = FSObject::new(path.to_path_buf(), metadata, None);
+    let mut fs_object = FsObject::new(path.to_path_buf(), metadata, None);
 
-    if path.is_dir() {
+    if path.is_symlink() {
+        println!("symlink: {}", path.display());
+    } else if path.is_dir() {
         let dir_content = read_dir_content(path)?;
         if !dir_content.is_empty() {
             fs_object.content = Some(content_recursively(&dir_content)?);
