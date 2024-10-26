@@ -1,6 +1,6 @@
 [package]
 name = "minicloud"
-version = "0.9.10"
+version = "0.9.11"
 edition = "2021"
 
 [dependencies]
@@ -13,3 +13,4 @@ serde = { version = "1.0", features = ["derive"] }  # query requests
 tokio-util = { version = "0.7", features = ["io"] } # files uploading
 mime_guess = { version = "2.0" } # for file preview
 #html = "0.6.3"
+

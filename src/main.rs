@@ -44,7 +44,7 @@ async fn main() {
     let socket_addr = SocketAddr::new(local_ip, cli_args.port);
     let listener = tokio::net::TcpListener::bind(socket_addr);
 
-    println!("\nlistening on {}:{}", socket_addr.ip(), socket_addr.port());
+    println!("\nlistening on http://{}:{}", socket_addr.ip(), socket_addr.port());
 
     axum::serve(listener.await.unwrap(), app).await.unwrap();
 }
