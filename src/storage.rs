@@ -45,9 +45,7 @@ fn process_single_path(path: &Path) -> Result<FsObject> {
     let metadata = get_metadata(path)?;
     let mut fs_object = FsObject::new(path.to_path_buf(), metadata, None);
 
-    if path.is_symlink() {
-        println!("symlink: {}", path.display());
-    } else if path.is_dir() {
+    if path.is_dir() && !path.is_symlink() {
         let dir_content = read_dir_content(path)?;
         if !dir_content.is_empty() {
             fs_object.content = Some(content_recursively(&dir_content)?);
