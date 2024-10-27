@@ -7,7 +7,7 @@ use std::path::PathBuf;
 #[command(author, version, about, long_about = None)]
 pub struct Args {
     /// Set directories and files that will be distributed
-    #[arg(required = true)]
+    #[arg(required = false)]
     pub paths: Vec<PathBuf>,
 
     /// Port number

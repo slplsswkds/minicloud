@@ -3,6 +3,7 @@ mod fs_object;
 mod storage;
 mod html_page;
 mod server;
+mod file_chooser;
 
 use std::net::SocketAddr;
 use axum::{routing::get, Router, response::Html};
@@ -15,6 +16,10 @@ use crate::server::*;
 #[tokio::main]
 async fn main() {
     let mut cli_args = cli_args::Args::parse();
+
+    if cli_args.paths.is_empty() {
+        cli_args.paths = file_chooser::file_chooser_dialog();
+    }
 
     if cli_args.prepare_paths().is_err() { return; }
 
