@@ -21,6 +21,8 @@ async fn main() {
         cli_args.paths = file_chooser::file_chooser_dialog();
     }
 
+    if cli_args.paths.is_empty() { return; }
+
     if cli_args.prepare_paths().is_err() { return; }
 
     // Get files tree

@@ -1,4 +1,4 @@
-use fltk::{app, prelude::*, window::Window, button::*, enums::Font, browser, dialog::{NativeFileChooser, FileDialogType, FileDialogAction}};
+use fltk::{app, prelude::*, window::Window, button::*, browser, dialog::{NativeFileChooser, FileDialogType, FileDialogAction}};
 use std::rc::Rc;
 use std::cell::RefCell;
 use std::path::PathBuf;
@@ -16,20 +16,15 @@ fn add_items_to_list(dialog_type: FileDialogType, list: &Rc<RefCell<MultiBrowser
 pub fn file_chooser_dialog() -> Vec<PathBuf> {
     let paths: Rc<RefCell<Vec<PathBuf>>> = Rc::new(RefCell::new(Vec::new()));
 
-    let app = app::App::default().with_scheme(app::Scheme::Base);
-
-    let font_path = "/tmp/ELEGANT_TYPEWRITER_Bold.ttf";
-    let font = Font::load_font(font_path).unwrap();
-    Font::set_font(Font::Helvetica, &font);
+    let app = app::App::default().with_scheme(app::Scheme::Plastic);
 
     let window_width = 640;
     let window_height = 480;
 
-    let window = Window::default()
+    let mut window = Window::default()
         .center_screen()
         .with_size(window_width, window_height)
         .with_label(format!("Minicloud v{}", env!("CARGO_PKG_VERSION")).as_str());
-    let window = Rc::new(RefCell::new(window));
 
     // Create a shared reference to the MultiBrowser
     let list = Rc::new(RefCell::new(
@@ -79,7 +74,6 @@ pub fn file_chooser_dialog() -> Vec<PathBuf> {
     start_server_btn.set_callback({
         let list_clone = list.clone(); // Clone the Rc for the callback
         let paths_clone = paths.clone();
-        let window_clone = window.clone();
         move |_| {
             for index in 1..list_clone.borrow().size() + 1 {
                 let item = list_clone.borrow().text(index).unwrap();
@@ -90,8 +84,8 @@ pub fn file_chooser_dialog() -> Vec<PathBuf> {
         }
     });
 
-    window.borrow_mut().end();
-    window.borrow_mut().show();
+    window.end();
+    window.show();
     app.run().unwrap();
 
     paths.take()
