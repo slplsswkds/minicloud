@@ -8,8 +8,10 @@ use axum::{
 use serde::Deserialize;
 use std::{collections::HashMap, sync::Arc};
 use tokio_util::io::ReaderStream;
+use tracing::info;
 
 pub async fn root_handler(page: State<Arc<Html<String>>>) -> impl IntoResponse {
+    info!("Root page request");
     (**page).clone()
 }
 
@@ -49,6 +51,8 @@ pub async fn download_handler(
 ) -> Result<impl IntoResponse, (StatusCode, String)> {
     let (fs_object, stream) = prepare_response(&state, &query).await?;
 
+    info!("Download request: {}", fs_object.path.display());
+
     let body = Body::from_stream(stream);
 
     let mut headers = HeaderMap::new();
@@ -67,6 +71,8 @@ pub async fn preview_handler(
     query: Query<Params>,
 ) -> impl IntoResponse {
     let (fs_object, stream) = prepare_response(&state, &query).await?;
+
+    info!("Preview request: {}", fs_object.path.display());
 
     let body = Body::from_stream(stream);
 
