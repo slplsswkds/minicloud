@@ -5,6 +5,7 @@ use std::{
     path::{Path, PathBuf},
     sync::Arc,
 };
+use tracing::log::{error, warn};
 
 /// Recursively scans a vector of PathBuf and constructs a vector of FSObject.
 ///
@@ -22,7 +23,7 @@ pub fn content_recursively(paths: &[PathBuf]) -> Result<FsObjects> {
     for path in paths.iter() {
         match process_single_path(path) {
             Ok(fs_object) => fs_objects_root.push(Arc::new(fs_object)),
-            Err(err) => eprintln!("{:?}: {err}", path),
+            Err(err) => warn!("{:?}: {err}", path),
         }
     }
     Ok(fs_objects_root)
@@ -66,7 +67,7 @@ fn read_dir_content(path: &Path) -> Result<Vec<PathBuf>> {
         .filter_map(|entry| match entry {
             Ok(dir_entry) => Some(Ok(dir_entry.path())),
             Err(err) => {
-                eprintln!("Error reading directory entry: {err}. Skipping...");
+                warn!("Failed to read directory entry: {err}. Skipping...");
                 None
             }
         })

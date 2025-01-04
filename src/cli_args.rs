@@ -1,5 +1,6 @@
 use clap::Parser;
 use std::path::PathBuf;
+use tracing::error;
 
 /// A program for transferring files between devices via HTTP with an HTML interface
 // Store parsed values from CLI
@@ -22,7 +23,7 @@ impl Args {
 
         wrong_paths.map_err(|err| {
             err.iter().for_each(|(path, err)| {
-                eprintln!("Error: {:?} {:?}", path, err.to_string());
+                error!("{:?} {:?}", path, err.to_string());
             })
         })?;
 

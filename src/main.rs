@@ -13,8 +13,19 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 use storage::content_recursively;
 
+use tracing::{debug, error, info, trace, warn, Level};
+use tracing_subscriber;
+use tracing_subscriber::EnvFilter;
+
 #[tokio::main]
 async fn main() {
+    let filter = EnvFilter::new(std::env::var("RUST_LOG").unwrap_or_else(|_| "info".to_string()));
+    tracing_subscriber::fmt()
+        .with_env_filter(filter)
+        .with_target(false)
+        .compact()
+        .init();
+
     let mut cli_args = cli_args::Args::parse();
 
     if cli_args.paths.is_empty() {
@@ -37,9 +48,9 @@ async fn main() {
     // Info about obtained files, directories, and symbolic links
     show_fs_objects_summary(&fs_objects);
 
-    print!("Generating HTML...");
+    debug!("Generating HTML...");
     let (page, hash_map) = html_page::html_page(&fs_objects);
-    println!(" OK");
+    debug!("HTML generated.");
 
     let hash_map_state = Arc::new(hash_map);
 
@@ -57,8 +68,8 @@ async fn main() {
     let socket_addr = SocketAddr::new(local_ip, cli_args.port);
     let listener = tokio::net::TcpListener::bind(socket_addr);
 
-    println!(
-        "\nlistening on http://{}:{}",
+    info!(
+        "Listening on http://{}:{}",
         socket_addr.ip(),
         socket_addr.port()
     );
