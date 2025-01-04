@@ -1,8 +1,14 @@
-use fltk::{app, prelude::*, window::Window, button::*, browser, dialog::{NativeFileChooser, FileDialogType, FileDialogAction}};
-use std::rc::Rc;
+use fltk::browser::MultiBrowser;
+use fltk::{
+    app, browser,
+    button::*,
+    dialog::{FileDialogAction, FileDialogType, NativeFileChooser},
+    prelude::*,
+    window::Window,
+};
 use std::cell::RefCell;
 use std::path::PathBuf;
-use fltk::browser::MultiBrowser;
+use std::rc::Rc;
 
 fn add_items_to_list(dialog_type: FileDialogType, list: &Rc<RefCell<MultiBrowser>>) {
     let mut dialog = NativeFileChooser::new(dialog_type);
@@ -27,9 +33,9 @@ pub fn file_chooser_dialog() -> Vec<PathBuf> {
         .with_label(format!("Minicloud v{}", env!("CARGO_PKG_VERSION")).as_str());
 
     // Create a shared reference to the MultiBrowser
-    let list = Rc::new(RefCell::new(
-        browser::MultiBrowser::new(220, 10, 410, 460, "")
-    ));
+    let list = Rc::new(RefCell::new(browser::MultiBrowser::new(
+        220, 10, 410, 460, "",
+    )));
 
     let mut add_files_btn = Button::new(10, 10, 200, 50, "Add Files");
     add_files_btn.set_label_size(20);
@@ -61,12 +67,15 @@ pub fn file_chooser_dialog() -> Vec<PathBuf> {
 
             // Delete in reverse order to avoid problems with shifting indexes.
             for &item_line in selected_items.iter().rev() {
-                println!("{}: {}", item_line, list_clone.borrow().text(item_line).unwrap());
+                println!(
+                    "{}: {}",
+                    item_line,
+                    list_clone.borrow().text(item_line).unwrap()
+                );
                 list_clone.borrow_mut().remove(item_line);
             }
         }
     });
-
 
     let mut start_server_btn = Button::new(10, 420, 200, 50, "Start Server");
     start_server_btn.set_label_size(20);

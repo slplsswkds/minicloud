@@ -1,12 +1,12 @@
-use std::{collections::HashMap, sync::Arc};
-use axum::{
-    extract::{State, Query},
-    response::{Html, IntoResponse},
-    http::{StatusCode, HeaderMap, header},
-    body::Body,
-};
 use crate::fs_object::FsObject;
+use axum::{
+    body::Body,
+    extract::{Query, State},
+    http::{header, HeaderMap, StatusCode},
+    response::{Html, IntoResponse},
+};
 use serde::Deserialize;
+use std::{collections::HashMap, sync::Arc};
 use tokio_util::io::ReaderStream;
 
 pub async fn root_handler(page: State<Arc<Html<String>>>) -> impl IntoResponse {
@@ -72,7 +72,12 @@ pub async fn preview_handler(
 
     let content_type = match mime_guess::from_path(&fs_object.path).first_raw() {
         Some(mime) => mime,
-        None => return Err((StatusCode::BAD_REQUEST, "MIME Type couldn't be determined".to_string())),
+        None => {
+            return Err((
+                StatusCode::BAD_REQUEST,
+                "MIME Type couldn't be determined".to_string(),
+            ))
+        }
     };
 
     let headers = [(header::CONTENT_TYPE, content_type)];

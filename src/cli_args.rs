@@ -20,12 +20,11 @@ impl Args {
     pub fn prepare_paths(&mut self) -> Result<(), ()> {
         let wrong_paths = self.canonicalize_paths();
 
-        wrong_paths
-            .map_err(|err| {
-                err.iter().for_each(|(path, err)| {
-                    eprintln!("Error: {:?} {:?}", path, err.to_string());
-                })
-            })?;
+        wrong_paths.map_err(|err| {
+            err.iter().for_each(|(path, err)| {
+                eprintln!("Error: {:?} {:?}", path, err.to_string());
+            })
+        })?;
 
         self.remove_repeated_paths();
         Ok(())
@@ -44,14 +43,12 @@ impl Args {
         let wrong_paths: Vec<(PathBuf, std::io::Error)> = self
             .paths
             .iter()
-            .filter_map(|path| {
-                path.canonicalize().err().map(|err| (path.clone(), err))
-            })
+            .filter_map(|path| path.canonicalize().err().map(|err| (path.clone(), err)))
             .collect();
 
         match wrong_paths.is_empty() {
             true => Ok(()),
-            false => Err(wrong_paths)
+            false => Err(wrong_paths),
         }
     }
 }

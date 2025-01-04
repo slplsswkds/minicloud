@@ -1,6 +1,6 @@
+use crate::fs_object::{FsObject, FsObjects};
 use std::collections::HashMap;
 use std::sync::Arc;
-use crate::fs_object::{FsObject, FsObjects};
 
 pub fn html_page(fsobjects: &FsObjects) -> (String, HashMap<u64, Arc<FsObject>>) {
     let (body, hash_map) = body(fsobjects);
@@ -39,12 +39,16 @@ fn head() -> String {
 
 #[inline]
 fn title() -> String {
-    format!("\n<title> Minicloud v{} </title>\n", env!("CARGO_PKG_VERSION"))
+    format!(
+        "\n<title> Minicloud v{} </title>\n",
+        env!("CARGO_PKG_VERSION")
+    )
 }
 
 #[inline]
 fn style() -> String {
-    String::from("\n<style>
+    String::from(
+        "\n<style>
     ul,
     #myUL {
       list-style-type: none;
@@ -102,7 +106,8 @@ fn script() -> String {
             this.classList.toggle(\"caret-down\");
         });
     }
-</script>\n".to_string()
+</script>\n"
+        .to_string()
 }
 
 #[inline]
@@ -118,19 +123,13 @@ pub fn body(fsobjects: &FsObjects) -> (String, HashMap<u64, Arc<FsObject>>) {
 }
 
 /// Returns html unordered list from [`FsObjects`] recursively
-pub fn unordered_list(
-    files: &FsObjects,
-    hash_map: &mut HashMap<u64, Arc<FsObject>>,
-) -> String {
+pub fn unordered_list(files: &FsObjects, hash_map: &mut HashMap<u64, Arc<FsObject>>) -> String {
     let list_of_items = list_of_items(files, hash_map);
     format!("<ul>\n{}</ul>\n", list_of_items)
 }
 
 /// Returns the html code for the list from &[`FsObjects`]
-fn list_of_items(
-    items: &FsObjects,
-    hash_map: &mut HashMap<u64, Arc<FsObject>>,
-) -> String {
+fn list_of_items(items: &FsObjects, hash_map: &mut HashMap<u64, Arc<FsObject>>) -> String {
     let mut list = String::new();
 
     for item in items.iter() {

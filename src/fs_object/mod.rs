@@ -1,10 +1,10 @@
 //! This module created to scan filesystem and store files in tree-style.
 
 use std::{
-    fs::Metadata,
     ffi::OsStr,
-    path::PathBuf,
+    fs::Metadata,
     hash::{DefaultHasher, Hash, Hasher},
+    path::PathBuf,
     sync::Arc,
 };
 
@@ -33,7 +33,11 @@ pub struct FsObject {
 
 impl FsObject {
     pub fn new(path: PathBuf, metadata: Metadata, content: Option<FsObjects>) -> Self {
-        Self { path, metadata, content }
+        Self {
+            path,
+            metadata,
+            content,
+        }
     }
 
     pub fn is_file(&self) -> bool {
@@ -72,7 +76,7 @@ impl FsObject {
     }
 
     /// Return iterator over each FSObject
-    pub fn recursive_iter(&self) -> impl Iterator<Item=&FsObject> {
+    pub fn recursive_iter(&self) -> impl Iterator<Item = &FsObject> {
         let mut stack = vec![self];
         std::iter::from_fn(move || {
             if let Some(current) = stack.pop() {
@@ -87,7 +91,7 @@ impl FsObject {
     }
 
     /// Return iterator over each FSObject that is a file
-    pub fn file_iter(&self) -> impl Iterator<Item=&FsObject> {
+    pub fn file_iter(&self) -> impl Iterator<Item = &FsObject> {
         let mut stack = vec![self];
         std::iter::from_fn(move || {
             while let Some(current) = stack.pop() {
@@ -104,7 +108,7 @@ impl FsObject {
     }
 
     /// Return iterator over each FSObject that is a directory
-    pub fn dir_iter(&self) -> impl Iterator<Item=&FsObject> {
+    pub fn dir_iter(&self) -> impl Iterator<Item = &FsObject> {
         let mut stack = vec![self];
         std::iter::from_fn(move || {
             while let Some(current) = stack.pop() {
@@ -125,7 +129,7 @@ impl FsObject {
     }
 
     /// Return iterator over each FSObject that is a symbolic link. Not ready yet!
-    pub fn symlink_iter(&self) -> impl Iterator<Item=&FsObject> {
+    pub fn symlink_iter(&self) -> impl Iterator<Item = &FsObject> {
         let mut stack = vec![self];
         std::iter::from_fn(move || {
             while let Some(current) = stack.pop() {

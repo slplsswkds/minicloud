@@ -1,17 +1,17 @@
 mod cli_args;
+mod file_chooser;
 mod fs_object;
-mod storage;
 mod html_page;
 mod server;
-mod file_chooser;
+mod storage;
 
-use std::net::SocketAddr;
-use axum::{routing::get, Router, response::Html};
-use clap::Parser;
-use storage::content_recursively;
-use std::sync::Arc;
 use crate::fs_object::show_fs_objects_summary;
 use crate::server::*;
+use axum::{response::Html, routing::get, Router};
+use clap::Parser;
+use std::net::SocketAddr;
+use std::sync::Arc;
+use storage::content_recursively;
 
 #[tokio::main]
 async fn main() {
@@ -21,15 +21,18 @@ async fn main() {
         cli_args.paths = file_chooser::file_chooser_dialog();
     }
 
-    if cli_args.paths.is_empty() { return; }
+    if cli_args.paths.is_empty() {
+        return;
+    }
 
-    if cli_args.prepare_paths().is_err() { return; }
+    if cli_args.prepare_paths().is_err() {
+        return;
+    }
 
     // Get files tree
-    let fs_objects = content_recursively(&cli_args.paths)
-        .unwrap_or_else(|err| {
-            panic!("{err}") // close minicloud
-        });
+    let fs_objects = content_recursively(&cli_args.paths).unwrap_or_else(|err| {
+        panic!("{err}") // close minicloud
+    });
 
     // Info about obtained files, directories, and symbolic links
     show_fs_objects_summary(&fs_objects);
@@ -42,7 +45,10 @@ async fn main() {
 
     let app = Router::new()
         .route("/", get(root_handler).with_state(Arc::new(Html(page))))
-        .route("/dl", get(download_handler).with_state(hash_map_state.clone()))
+        .route(
+            "/dl",
+            get(download_handler).with_state(hash_map_state.clone()),
+        )
         .route("/pw", get(preview_handler).with_state(hash_map_state));
 
     //----------------------------------------------
@@ -51,7 +57,11 @@ async fn main() {
     let socket_addr = SocketAddr::new(local_ip, cli_args.port);
     let listener = tokio::net::TcpListener::bind(socket_addr);
 
-    println!("\nlistening on http://{}:{}", socket_addr.ip(), socket_addr.port());
+    println!(
+        "\nlistening on http://{}:{}",
+        socket_addr.ip(),
+        socket_addr.port()
+    );
 
     axum::serve(listener.await.unwrap(), app).await.unwrap();
 }

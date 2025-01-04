@@ -1,10 +1,10 @@
+use crate::fs_object::{FsObject, FsObjects};
 use std::{
     fs,
     io::Result,
-    path::{PathBuf, Path},
+    path::{Path, PathBuf},
     sync::Arc,
 };
-use crate::fs_object::{FsObject, FsObjects};
 
 /// Recursively scans a vector of PathBuf and constructs a vector of FSObject.
 ///
@@ -55,7 +55,6 @@ fn process_single_path(path: &Path) -> Result<FsObject> {
     Ok(fs_object)
 }
 
-
 /// Returns a list of files, directories, and symbolic links in a directory
 ///
 /// This function will return an error in the following situations, but is not limited to just these cases:
@@ -64,13 +63,11 @@ fn process_single_path(path: &Path) -> Result<FsObject> {
 /// - The path points at a non-directory file.
 fn read_dir_content(path: &Path) -> Result<Vec<PathBuf>> {
     fs::read_dir(path)?
-        .filter_map(|entry| {
-            match entry {
-                Ok(dir_entry) => Some(Ok(dir_entry.path())),
-                Err(err) => {
-                    eprintln!("Error reading directory entry: {err}. Skipping...");
-                    None
-                }
+        .filter_map(|entry| match entry {
+            Ok(dir_entry) => Some(Ok(dir_entry.path())),
+            Err(err) => {
+                eprintln!("Error reading directory entry: {err}. Skipping...");
+                None
             }
         })
         .collect()
