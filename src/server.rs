@@ -8,7 +8,7 @@ use axum::{
 use serde::Deserialize;
 use std::{collections::HashMap, sync::Arc};
 use tokio_util::io::ReaderStream;
-use tracing::info;
+use tracing::{info, warn};
 
 pub async fn root_handler(page: State<Arc<Html<String>>>) -> impl IntoResponse {
     info!("Root page request");
@@ -30,6 +30,7 @@ async fn prepare_response(
     let fs_object = match state.get(&query.id) {
         Some(fs_obj) => fs_obj.clone(),
         None => {
+            warn!("Item not found. ID = {}", &query.id);
             let err_msg = format!("Unexpected error. Item not found. ID = {}", &query.id);
             return Err((StatusCode::NOT_FOUND, err_msg));
         }
@@ -79,10 +80,14 @@ pub async fn preview_handler(
     let content_type = match mime_guess::from_path(&fs_object.path).first_raw() {
         Some(mime) => mime,
         None => {
+            warn!(
+                "Could not preview file: MIME Type couldn't be determined for file: {}",
+                fs_object.path.display()
+            );
             return Err((
                 StatusCode::BAD_REQUEST,
                 "MIME Type couldn't be determined".to_string(),
-            ))
+            ));
         }
     };
 
