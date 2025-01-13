@@ -12,7 +12,7 @@ pub struct Args {
     pub paths: Vec<PathBuf>,
 
     /// Port number
-    #[arg(short = 'p', long, default_value_t = 42666)]
+    #[arg(short = 'p', long, default_value_t = 48666)]
     pub port: u16,
 }
 
