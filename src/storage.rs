@@ -5,7 +5,7 @@ use std::{
     path::{Path, PathBuf},
     sync::Arc,
 };
-use tracing::log::{error, warn};
+use tracing::log::warn;
 
 /// Recursively scans a vector of PathBuf and constructs a vector of FSObject.
 ///
