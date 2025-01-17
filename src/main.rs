@@ -6,6 +6,7 @@ mod server_receiver_mode;
 mod server_transmitter_mode;
 mod storage;
 
+use std::error::Error;
 use crate::fs_object::show_fs_objects_summary;
 use crate::server_receiver_mode::*;
 use crate::server_transmitter_mode::*;
@@ -15,14 +16,14 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 use storage::content_recursively;
 
-use tracing::{debug, info};
+use tracing::{debug, info, error, warn};
 use tracing_subscriber;
 use tracing_subscriber::EnvFilter;
 
 use tower_http::limit::RequestBodyLimitLayer;
 
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<(), Box<dyn Error>> {
     let filter = EnvFilter::new(std::env::var("RUST_LOG").unwrap_or_else(|_| "info".to_string()));
     tracing_subscriber::fmt()
         .with_env_filter(filter)
@@ -51,22 +52,13 @@ async fn main() {
             .layer(tower_http::trace::TraceLayer::new_for_http())
     } else {
         info!("Transmit mode enabled. Paths: {:?}", cli_args.paths);
-        if cli_args.paths.is_empty() {
-            cli_args.paths = file_chooser::file_chooser_dialog();
-        }
-
-        if cli_args.paths.is_empty() {
-            return;
-        }
 
         if cli_args.prepare_paths().is_err() {
-            return;
+            return Ok(());
         }
 
         // Get files tree
-        let fs_objects = content_recursively(&cli_args.paths).unwrap_or_else(|err| {
-            panic!("{err}") // close minicloud
-        });
+        let fs_objects = content_recursively(&cli_args.paths)?;
 
         // Info about obtained files, directories, and symbolic links
         show_fs_objects_summary(&fs_objects);
@@ -84,11 +76,12 @@ async fn main() {
                 get(download_handler).with_state(fs_objects_hash_map_state.clone()),
             )
             .route("/pw", get(preview_handler).with_state(fs_objects_hash_map_state))
+            .layer(tower_http::trace::TraceLayer::new_for_http())
     };
 
     //----------------------------------------------
 
-    let local_ip = local_ip_address::local_ip().unwrap();
+    let local_ip = local_ip_address::local_ip()?;
     let socket_addr = SocketAddr::new(local_ip, cli_args.port);
     let listener = tokio::net::TcpListener::bind(socket_addr);
 
@@ -98,5 +91,7 @@ async fn main() {
         socket_addr.port()
     );
 
-    axum::serve(listener.await.unwrap(), app).await.unwrap();
+    axum::serve(listener.await?, app).await?;
+
+    Ok(())
 }

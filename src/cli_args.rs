@@ -13,37 +13,23 @@ use tracing::error;
 ))]
 pub struct Args {
     /// Set directories and files that will be distributed (only in transmitter mode)
-    #[arg(
-        required = false,
-        value_name = "FILE_OR_DIR",
-        conflicts_with = "receive"
-    )]
+    #[arg(required = false, value_name = "FILE_OR_DIR", conflicts_with = "receive")]
     pub paths: Vec<PathBuf>,
 
     /// Port number
-    #[arg(short = 'p', long, default_value_t = 48666, require_equals = true)]
+    #[arg(short = 'p', long, default_value_t = 48666)]
     pub port: u16,
 
     /// The application mode in which clients upload files to the server
-    #[arg(
-        long,
-        short = 'r',
-        default_value_t = false,
-        requires = "received_files_path"
-    )]
+    #[arg(long, short = 'r', default_value_t = false, requires = "received_files_path")]
     pub receive: bool,
 
     /// The path where to save the received files (only in receiver mode)
-    #[arg(
-        long,
-        value_name = "DIR",
-        requires = "receive",
-        require_equals = true
-    )]
+    #[arg(long, default_value = "/tmp/minicloud", value_name = "DIR", requires = "receive")]
     pub received_files_path: PathBuf,
 
     /// Maximum size of received files in MiB
-    #[arg(long, short = 's', default_value_t = 10, require_equals = true)]
+    #[arg(long, short = 's', default_value_t = 10)]
     pub max_received_file_size: usize,
 }
 impl Args {
