@@ -30,7 +30,7 @@ pub struct Args {
     pub received_files_path: PathBuf,
 
     /// Maximum size of received files in MiB
-    #[arg(long, short = 's', default_value_t = 10)]
+    #[arg(long, short = 's', default_value_t = 50)]
     pub max_received_file_size: usize,
 }
 impl Args {
