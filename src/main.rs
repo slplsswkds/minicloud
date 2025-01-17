@@ -2,23 +2,20 @@ mod cli_args;
 mod file_chooser;
 mod fs_object;
 mod html_page;
-mod server;
+mod server_receiver_mode;
+mod server_transmitter_mode;
 mod storage;
 
 use crate::fs_object::show_fs_objects_summary;
-use crate::server::*;
-use axum::{
-    extract::DefaultBodyLimit,
-    response::Html,
-    routing::get,
-    Router,
-};
+use crate::server_receiver_mode::*;
+use crate::server_transmitter_mode::*;
+use axum::{extract::DefaultBodyLimit, response::Html, routing::get, Router};
 use clap::Parser;
 use std::net::SocketAddr;
 use std::sync::Arc;
 use storage::content_recursively;
 
-use tracing::{debug, error, info, trace, warn, Level};
+use tracing::{debug, info};
 use tracing_subscriber;
 use tracing_subscriber::EnvFilter;
 
@@ -34,20 +31,6 @@ async fn main() {
         .init();
 
     let mut cli_args = cli_args::Args::parse();
-
-    // if cli_args.receive {
-    //     println!(
-    //         "Receive mode enabled. Files will be saved to: {:?}",
-    //         cli_args.received_files_path
-    //     );
-    //     assert!(cli_args.paths.is_empty(), "Paths should be empty in receive mode");
-    // } else {
-    //     println!("Transmit mode enabled. Paths: {:?}", cli_args.paths);
-    //     assert!(
-    //         cli_args.received_files_path.is_none(),
-    //         "Received files path should not be set in transmit mode"
-    //     );
-    // }
 
     let app = if cli_args.receive {
         info!("Receive mode enabled. Files will be saved to: {:?}", cli_args.received_files_path);
@@ -89,18 +72,18 @@ async fn main() {
         show_fs_objects_summary(&fs_objects);
 
         debug!("Generating HTML...");
-        let (page, hash_map) = html_page::html_page(&fs_objects);
+        let (page, fs_objects_hash_map) = html_page::html_page(&fs_objects);
         debug!("HTML generated.");
 
-        let hash_map_state = Arc::new(hash_map);
+        let fs_objects_hash_map_state = Arc::new(fs_objects_hash_map);
 
         Router::new()
             .route("/", get(root_handler).with_state(Arc::new(Html(page))))
             .route(
                 "/dl",
-                get(download_handler).with_state(hash_map_state.clone()),
+                get(download_handler).with_state(fs_objects_hash_map_state.clone()),
             )
-            .route("/pw", get(preview_handler).with_state(hash_map_state))
+            .route("/pw", get(preview_handler).with_state(fs_objects_hash_map_state))
     };
 
     //----------------------------------------------

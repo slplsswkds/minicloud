@@ -1,5 +1,4 @@
 use crate::fs_object::FsObject;
-use axum::extract::Multipart;
 use axum::{
     body::Body,
     extract::{Query, State},
@@ -48,10 +47,10 @@ async fn prepare_response(
 }
 
 pub async fn download_handler(
-    state: State<Arc<HashMap<u64, Arc<FsObject>>>>,
+    fs_objects_hash_map_state: State<Arc<HashMap<u64, Arc<FsObject>>>>,
     query: Query<Params>,
 ) -> Result<impl IntoResponse, (StatusCode, String)> {
-    let (fs_object, stream) = prepare_response(&state, &query).await?;
+    let (fs_object, stream) = prepare_response(&fs_objects_hash_map_state, &query).await?;
 
     info!("Download request: {}", fs_object.path.display());
 
@@ -95,40 +94,4 @@ pub async fn preview_handler(
     let headers = [(header::CONTENT_TYPE, content_type)];
 
     Ok((StatusCode::OK, headers, body))
-}
-
-pub async fn show_upload_form() -> Html<&'static str> {
-    Html(
-        r#"
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Upload Files</title>
-        </head>
-        <body>
-            <h1>Upload Multiple Files</h1>
-            <form action="/" method="post" enctype="multipart/form-data">
-                <input type="file" name="files" multiple>
-                <button type="submit">Upload</button>
-            </form>
-        </body>
-        </html>
-        "#,
-    )
-}
-
-pub async fn accept_upload_form(mut multipart: Multipart) {
-    while let Some(field) = multipart.next_field().await.unwrap() {
-        let name = field.name().unwrap().to_string();
-        let file_name = field.file_name().unwrap().to_string();
-        let content_type = field.content_type().unwrap().to_string();
-        let data = field.bytes().await.unwrap();
-
-        info!(
-            "Obtained: `{name}` (`{file_name}`: `{content_type}`) is {} bytes",
-            data.len()
-        );
-    }
 }
