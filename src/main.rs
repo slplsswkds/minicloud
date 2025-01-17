@@ -36,47 +36,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let app = if cli_args.receive {
         info!("Receive mode enabled. Files will be saved to: {:?}", cli_args.received_files_path);
 
-        let uploads_path_state = Arc::new(cli_args.received_files_path);
-
-        Router::new()
-            .route(
-                "/",
-                get(show_upload_form)
-                    .post(accept_upload_form)
-                    .with_state(uploads_path_state),
-            )
-            .layer(DefaultBodyLimit::disable())
-            .layer(RequestBodyLimitLayer::new(
-                cli_args.max_received_file_size * 1024 * 1024,
-            ))
-            .layer(tower_http::trace::TraceLayer::new_for_http())
+        server_receiver_mode::setup(&cli_args)
     } else {
         info!("Transmit mode enabled. Paths: {:?}", cli_args.paths);
 
-        if cli_args.prepare_paths().is_err() {
-            return Ok(());
-        }
-
-        // Get files tree
-        let fs_objects = content_recursively(&cli_args.paths)?;
-
-        // Info about obtained files, directories, and symbolic links
-        show_fs_objects_summary(&fs_objects);
-
-        debug!("Generating HTML...");
-        let (page, fs_objects_hash_map) = html_page::html_page(&fs_objects);
-        debug!("HTML generated.");
-
-        let fs_objects_hash_map_state = Arc::new(fs_objects_hash_map);
-
-        Router::new()
-            .route("/", get(root_handler).with_state(Arc::new(Html(page))))
-            .route(
-                "/dl",
-                get(download_handler).with_state(fs_objects_hash_map_state.clone()),
-            )
-            .route("/pw", get(preview_handler).with_state(fs_objects_hash_map_state))
-            .layer(tower_http::trace::TraceLayer::new_for_http())
+        server_transmitter_mode::setup(&mut cli_args)?
     };
 
     //----------------------------------------------

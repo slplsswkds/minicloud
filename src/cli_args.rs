@@ -1,7 +1,8 @@
+use std::path;
 use clap::ArgGroup;
 use clap::Parser;
 use std::path::PathBuf;
-use tracing::error;
+use tracing::{error, warn};
 
 /// A program for transferring files between devices via HTTP with an HTML interface
 #[derive(Parser, Debug)]
@@ -33,39 +34,27 @@ pub struct Args {
     pub max_received_file_size: usize,
 }
 impl Args {
-    /// Prepare vector of paths for using. Remove wrong paths and print errors.
-    pub fn prepare_paths(&mut self) -> Result<(), ()> {
-        let wrong_paths = self.canonicalize_paths();
+    pub fn prepare_paths(&mut self) {
+        for i in (0..self.paths.len()).rev() {  // Iterate from the end
+            let path = &mut self.paths[i];
 
-        wrong_paths.map_err(|err| {
-            err.iter().for_each(|(path, err)| {
-                error!("{:?} {:?}", path, err.to_string());
-            })
-        })?;
+            match path.canonicalize() {
+                Ok(canonicalized) => {
+                    *path = canonicalized;
+                }
+                Err(err) => {
+                    warn!("Failed to canonicalize path {:?}: {}. Skipping...", path, err);
+                    self.paths.remove(i);  // Remove the element if canonicalization failed
+                }
+            }
+        }
 
         self.remove_repeated_paths();
-        Ok(())
     }
 
-    /// Removes repeated elements in the vector
     fn remove_repeated_paths(&mut self) {
         self.paths.sort();
         self.paths.dedup();
     }
 
-    /// Canonicalize all paths
-    ///
-    /// Returns (paths, error) that cannot be canonicalized
-    fn canonicalize_paths(&mut self) -> Result<(), Vec<(PathBuf, std::io::Error)>> {
-        let wrong_paths: Vec<(PathBuf, std::io::Error)> = self
-            .paths
-            .iter()
-            .filter_map(|path| path.canonicalize().err().map(|err| (path.clone(), err)))
-            .collect();
-
-        match wrong_paths.is_empty() {
-            true => Ok(()),
-            false => Err(wrong_paths),
-        }
-    }
 }
