@@ -8,9 +8,13 @@ cd minicloud && \
 cargo build --release
 
 ### Usage:
+**help:** _minicloud --help_
+
+###### Receive files mode:
+* minicloud --receive --received-files-path=/tmp/minicloud ~/path/to/saved/files/
+
+###### Transmit files mode:
 * default usage: _minicloud ~/path/to/the/file/or/directory_
-* specify another port: _minicloud -p 65432 ~/your/path_
-* help: _minicloud --help_
 
 ### Roadmap
 - [x] Scan files

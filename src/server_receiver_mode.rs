@@ -12,11 +12,13 @@ use tracing::{error, info, warn};
 
 pub fn setup(cli_args: &Args) -> Router {
     let uploads_path_state = Arc::new(cli_args.received_files_path.clone());
+    let max_received_file_size = Arc::new(cli_args.max_received_file_size);
 
     Router::new()
         .route(
             "/",
             get(show_upload_form)
+                .with_state(*max_received_file_size)
                 .post(accept_upload_form)
                 .with_state(uploads_path_state),
         )
@@ -27,28 +29,36 @@ pub fn setup(cli_args: &Args) -> Router {
         .layer(tower_http::trace::TraceLayer::new_for_http())
 }
 
-pub async fn show_upload_form() -> Html<&'static str> {
+pub async fn show_upload_form(
+    max_received_file_size: State<usize>
+) -> Html<String> {
     info!("Root page request");
+
     Html(
-        r#"
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Upload Files</title>
-        </head>
-        <body>
-            <h1>Upload Multiple Files</h1>
-            <form action="/" method="post" enctype="multipart/form-data">
-                <input type="file" name="files" multiple>
-                <button type="submit">Upload</button>
-            </form>
-        </body>
-        </html>
-        "#,
+        format!(
+            r#"
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Upload files</title>
+            </head>
+            <body>
+                <h1>Upload files</h1>
+                <p>Maximum total file size: {} MiB </p>
+                <form action="/" method="post" enctype="multipart/form-data">
+                    <input type="file" name="files" multiple>
+                    <button type="submit">Upload</button>
+                </form>
+            </body>
+            </html>
+            "#,
+            max_received_file_size.0
+        )
     )
 }
+
 
 pub async fn accept_upload_form(
     uploads_path_state: State<Arc<PathBuf>>,
