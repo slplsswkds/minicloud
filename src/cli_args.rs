@@ -26,12 +26,12 @@ pub struct Args {
     pub receive: bool,
 
     /// The path where to save the received files (only in receiver mode)
-    #[arg(long, default_value = "/tmp/minicloud", value_name = "DIR", requires = "receive")]
+    #[arg(long, short = 'o', value_name = "DIR", requires = "receive")]
     pub received_files_path: PathBuf,
 
-    /// Maximum size of received files in MiB
+    /// Maximum total size of received files per request in MiB
     #[arg(long, short = 's', default_value_t = 50)]
-    pub max_received_file_size: usize,
+    pub max_total_received_files_size: usize,
 }
 impl Args {
     pub fn prepare_paths(&mut self) {

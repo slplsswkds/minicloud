@@ -12,25 +12,25 @@ use tracing::{error, info, warn};
 
 pub fn setup(cli_args: &Args) -> Router {
     let uploads_path_state = Arc::new(cli_args.received_files_path.clone());
-    let max_received_file_size = Arc::new(cli_args.max_received_file_size);
+    let max_total_received_files_size = Arc::new(cli_args.max_total_received_files_size);
 
     Router::new()
         .route(
             "/",
             get(show_upload_form)
-                .with_state(*max_received_file_size)
+                .with_state(*max_total_received_files_size)
                 .post(accept_upload_form)
                 .with_state(uploads_path_state),
         )
         .layer(DefaultBodyLimit::disable())
         .layer(RequestBodyLimitLayer::new(
-            cli_args.max_received_file_size * 1024 * 1024,
+            cli_args.max_total_received_files_size * 1024 * 1024,
         ))
         .layer(tower_http::trace::TraceLayer::new_for_http())
 }
 
 pub async fn show_upload_form(
-    max_received_file_size: State<usize>
+    max_total_received_file_size: State<usize>
 ) -> Html<String> {
     info!("Root page request");
 
@@ -54,7 +54,7 @@ pub async fn show_upload_form(
             </body>
             </html>
             "#,
-            max_received_file_size.0
+            max_total_received_file_size.0
         )
     )
 }

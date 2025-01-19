@@ -35,6 +35,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let app = if cli_args.receive {
         info!("Receive mode enabled. Files will be saved to: {:?}", cli_args.received_files_path);
+        info!("Maximum total files size per request is {} MiB", cli_args.max_total_received_files_size);
 
         server_receiver_mode::setup(&cli_args)
     } else {
