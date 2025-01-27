@@ -1,6 +1,6 @@
 [package]
 name = "minicloud"
-version = "0.12.8"
+version = "0.12.9"
 edition = "2021"
 
 # ------------------------- Enable a small amount of optimization in the dev profile.
@@ -11,7 +11,7 @@ opt-level = 1
 [profile.dev.package."*"]
 opt-level = 3
 
-# ------------------------- Release Mode Optimizations (Optional)
+# ------------------------- Release Mode Optimizations
 # Enable more optimization in the release profile at the cost of compile time.
 [profile.release]
 # Compile the entire crate as one unit.
@@ -43,5 +43,4 @@ serde = { version = "1.0", features = ["derive"] }  # query requests
 tokio-util = { version = "0.7.13", features = ["io"] } # files uploading
 mime_guess = { version = "2.0.5" } # for file preview
 #html = "0.6.3"
-fltk = { version = "1.5.1" }
 tower-http = { version = "0.6.2", features = ["limit", "trace"]}

@@ -1,8 +1,7 @@
-use std::path;
 use clap::ArgGroup;
 use clap::Parser;
 use std::path::PathBuf;
-use tracing::{error, warn};
+use tracing::warn;
 
 /// A program for transferring files between devices via HTTP with an HTML interface
 #[derive(Parser, Debug)]

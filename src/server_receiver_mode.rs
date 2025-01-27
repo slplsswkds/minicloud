@@ -4,7 +4,7 @@ use axum::http::StatusCode;
 use axum::response::{Html, IntoResponse};
 use axum::routing::get;
 use axum::Router;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::sync::Arc;
 use tokio::io::AsyncWriteExt;
 use tower_http::limit::RequestBodyLimitLayer;
@@ -79,9 +79,9 @@ pub async fn accept_upload_form(
         .await
         .map_err(IntoResponse::into_response)?
     {
-        let name = field.name().unwrap_or("unnamed").to_string();
+        let _name = field.name().unwrap_or("unnamed").to_string();
         let file_name = field.file_name().unwrap_or("unnamed").to_string();
-        let content_type = field.content_type().unwrap_or("unknown-type").to_string();
+        let _content_type = field.content_type().unwrap_or("unknown-type").to_string();
         let data = field.bytes().await.map_err(|err| {
             warn!("Failed to read multipart data: {}", err);
             err.into_response()

@@ -5,7 +5,7 @@ use std::{collections::HashMap, sync::Arc};
 use std::error::Error;
 use axum::routing::get;
 use tokio_util::io::ReaderStream;
-use tracing::{debug, error, info, warn};
+use tracing::{debug, info, warn};
 use crate::html_page;
 use crate::storage::content_recursively;
 use crate::cli_args::Args;

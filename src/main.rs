@@ -1,5 +1,4 @@
 mod cli_args;
-mod file_chooser;
 mod fs_object;
 mod html_page;
 mod server_receiver_mode;
@@ -7,20 +6,12 @@ mod server_transmitter_mode;
 mod storage;
 
 use std::error::Error;
-use crate::fs_object::show_fs_objects_summary;
-use crate::server_receiver_mode::*;
-use crate::server_transmitter_mode::*;
-use axum::{extract::DefaultBodyLimit, response::Html, routing::get, Router};
 use clap::Parser;
 use std::net::SocketAddr;
-use std::sync::Arc;
-use storage::content_recursively;
 
-use tracing::{debug, info, error, warn};
+use tracing::info;
 use tracing_subscriber;
 use tracing_subscriber::EnvFilter;
-
-use tower_http::limit::RequestBodyLimitLayer;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
