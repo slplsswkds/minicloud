@@ -5,16 +5,14 @@ mod server_receiver_mode;
 mod server_transmitter_mode;
 mod storage;
 
-use std::error::Error;
 use clap::Parser;
 use std::net::SocketAddr;
 
-use tracing::info;
 use tracing_subscriber;
 use tracing_subscriber::EnvFilter;
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn Error>> {
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let filter = EnvFilter::new(std::env::var("RUST_LOG").unwrap_or_else(|_| "info".to_string()));
     tracing_subscriber::fmt()
         .with_env_filter(filter)
@@ -25,12 +23,12 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let mut cli_args = cli_args::Args::parse();
 
     let app = if cli_args.receive {
-        info!("Receive mode enabled. Files will be saved to: {:?}", cli_args.received_files_path);
-        info!("Maximum total files size per request is {} MiB", cli_args.max_total_received_files_size);
+        tracing::info!("Receive mode enabled. Files will be saved to: {:?}", cli_args.received_files_path);
+        tracing::info!("Maximum total files size per request is {} MiB", cli_args.max_total_received_files_size);
 
         server_receiver_mode::setup(&cli_args)
     } else {
-        info!("Transmit mode enabled. Paths: {:?}", cli_args.paths);
+        tracing::info!("Transmit mode enabled. Paths: {:?}", cli_args.paths);
 
         server_transmitter_mode::setup(&mut cli_args)?
     };
@@ -41,7 +39,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let socket_addr = SocketAddr::new(local_ip, cli_args.port);
     let listener = tokio::net::TcpListener::bind(socket_addr);
 
-    info!(
+    tracing::info!(
         "Listening on http://{}:{}",
         socket_addr.ip(),
         socket_addr.port()

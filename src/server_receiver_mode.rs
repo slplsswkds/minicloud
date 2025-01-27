@@ -1,20 +1,18 @@
 use crate::cli_args::Args;
 use axum::extract::{DefaultBodyLimit, Multipart, State};
-use axum::http::StatusCode;
-use axum::response::{Html, IntoResponse};
+use axum::http;
+use axum::response::IntoResponse;
 use axum::routing::get;
-use axum::Router;
 use std::path::PathBuf;
 use std::sync::Arc;
 use tokio::io::AsyncWriteExt;
 use tower_http::limit::RequestBodyLimitLayer;
-use tracing::{error, info, warn};
 
-pub fn setup(cli_args: &Args) -> Router {
+pub fn setup(cli_args: &Args) -> axum::Router {
     let uploads_path_state = Arc::new(cli_args.received_files_path.clone());
     let max_total_received_files_size = Arc::new(cli_args.max_total_received_files_size);
 
-    Router::new()
+    axum::Router::new()
         .route(
             "/",
             get(show_upload_form)
@@ -29,14 +27,13 @@ pub fn setup(cli_args: &Args) -> Router {
         .layer(tower_http::trace::TraceLayer::new_for_http())
 }
 
-pub async fn show_upload_form(
-    max_total_received_file_size: State<usize>
-) -> Html<String> {
-    info!("Root page request");
+pub async fn show_upload_form(max_total_received_file_size: State<usize>) -> impl IntoResponse {
+    tracing::info!("Root page request");
 
-    Html(
-        format!(
-            r#"
+    //let html_page: String = HtmlPage::new().with_title().to_html_string();
+
+    axum::response::Html(format!(
+        r#"
             <!DOCTYPE html>
             <html lang="en">
             <head>
@@ -53,12 +50,10 @@ pub async fn show_upload_form(
                 </form>
             </body>
             </html>
-            "#,
-            max_total_received_file_size.0
-        )
-    )
+        "#,
+        max_total_received_file_size.0
+    ))
 }
-
 
 pub async fn accept_upload_form(
     uploads_path_state: State<Arc<PathBuf>>,
@@ -67,11 +62,11 @@ pub async fn accept_upload_form(
     let create_dir = tokio::fs::create_dir_all(uploads_path_state.as_ref());
 
     if create_dir.await.is_err() {
-        error!(
+        tracing::error!(
             "Failed to create directory {}",
             uploads_path_state.as_ref().display()
         );
-        return Err(StatusCode::INTERNAL_SERVER_ERROR.into_response());
+        return Err(http::StatusCode::INTERNAL_SERVER_ERROR.into_response());
     }
 
     while let Some(field) = multipart
@@ -83,7 +78,7 @@ pub async fn accept_upload_form(
         let file_name = field.file_name().unwrap_or("unnamed").to_string();
         let _content_type = field.content_type().unwrap_or("unknown-type").to_string();
         let data = field.bytes().await.map_err(|err| {
-            warn!("Failed to read multipart data: {}", err);
+            tracing::warn!("Failed to read multipart data: {}", err);
             err.into_response()
         })?;
 
@@ -92,16 +87,16 @@ pub async fn accept_upload_form(
         let mut file = tokio::fs::File::create(file_path.clone())
             .await
             .map_err(|err| {
-                error!("Failed to create file: {}", err);
-                StatusCode::INTERNAL_SERVER_ERROR.into_response()
+                tracing::error!("Failed to create file: {}", err);
+                http::StatusCode::INTERNAL_SERVER_ERROR.into_response()
             })?;
 
         file.write_all(&data).await.map_err(|err| {
-            error!("Failed to save file: {}", err);
-            StatusCode::INTERNAL_SERVER_ERROR.into_response()
+            tracing::error!("Failed to save file: {}", err);
+            http::StatusCode::INTERNAL_SERVER_ERROR.into_response()
         })?;
 
-        info!("Received file: {}", file_path.display());
+        tracing::info!("Received file: {}", file_path.display());
     }
 
     Ok("Upload successful".into_response())

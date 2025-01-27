@@ -1,7 +1,6 @@
 use clap::ArgGroup;
 use clap::Parser;
 use std::path::PathBuf;
-use tracing::warn;
 
 /// A program for transferring files between devices via HTTP with an HTML interface
 #[derive(Parser, Debug)]
@@ -42,7 +41,7 @@ impl Args {
                     *path = canonicalized;
                 }
                 Err(err) => {
-                    warn!("Failed to canonicalize path {:?}: {}. Skipping...", path, err);
+                    tracing::warn!("Failed to canonicalize path {:?}: {}. Skipping...", path, err);
                     self.paths.remove(i);  // Remove the element if canonicalization failed
                 }
             }
