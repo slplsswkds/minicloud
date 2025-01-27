@@ -25,12 +25,13 @@ pub struct Args {
 
     /// The path where to save the received files (only in receiver mode)
     #[arg(long, short = 'o', value_name = "DIR", requires = "receive")]
-    pub received_files_path: PathBuf,
+    pub received_files_path: Option<PathBuf>,
 
     /// Maximum total size of received files per request in MiB
     #[arg(long, short = 's', default_value_t = 50)]
     pub max_total_received_files_size: usize,
 }
+
 impl Args {
     pub fn prepare_paths(&mut self) {
         for i in (0..self.paths.len()).rev() {  // Iterate from the end
