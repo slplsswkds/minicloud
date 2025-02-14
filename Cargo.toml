@@ -1,6 +1,6 @@
 [package]
 name = "minicloud"
-version = "0.13.0"
+version = "0.13.1"
 edition = "2021"
 
 # ------------------------- Enable a small amount of optimization in the dev profile.
@@ -43,4 +43,4 @@ serde = { version = "1.0", features = ["derive"] }  # query requests
 tokio-util = { version = "0.7.13", features = ["io"] } # files uploading
 mime_guess = { version = "2.0.5" } # for file preview
 #html = "0.6.3"
-tower-http = { version = "0.6.2", features = ["limit", "trace"]}
+tower-http = { version = "0.6.2", features = ["limit", "trace"] }

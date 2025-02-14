@@ -9,6 +9,9 @@ use tokio::io::AsyncWriteExt;
 use tower_http::limit::RequestBodyLimitLayer;
 
 pub fn setup(cli_args: &Args) -> axum::Router {
+    tracing::info!("Receive mode enabled. Files will be saved to: {:?}", cli_args.received_files_path);
+    tracing::info!("Maximum total files size per request is {} MiB", cli_args.max_total_received_files_size);
+
     let uploads_path_state: Arc<PathBuf> = Arc::new(cli_args.received_files_path.clone().unwrap());
     let max_total_received_files_size = Arc::new(cli_args.max_total_received_files_size);
 
@@ -142,8 +145,6 @@ pub async fn show_upload_form(max_total_received_file_size: State<usize>) -> imp
     "#,
         max_total_received_file_size.0
     ))
-
-
 }
 
 pub async fn accept_upload_form(
@@ -179,7 +180,8 @@ pub async fn accept_upload_form(
             file_name: {file_name}
             content_type: {content_type}
             data length: {}
-            "#, data.len()
+            "#,
+            data.len()
         );
 
         let file_path = uploads_path_state.as_ref().clone().join(file_name);

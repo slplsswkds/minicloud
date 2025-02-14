@@ -22,15 +22,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut cli_args = cli_args::Args::parse();
 
-    let app = if cli_args.receive {
-        tracing::info!("Receive mode enabled. Files will be saved to: {:?}", cli_args.received_files_path);
-        tracing::info!("Maximum total files size per request is {} MiB", cli_args.max_total_received_files_size);
-
-        server_receiver_mode::setup(&cli_args)
-    } else {
-        tracing::info!("Transmit mode enabled. Paths: {:?}", cli_args.paths);
-
-        server_transmitter_mode::setup(&mut cli_args)?
+    let app;
+    match cli_args.receive {
+        true => app = server_receiver_mode::setup(&cli_args),
+        false => app = server_transmitter_mode::setup(&mut cli_args)?,
     };
 
     //----------------------------------------------

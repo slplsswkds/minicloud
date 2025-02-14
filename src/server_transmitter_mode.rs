@@ -15,6 +15,7 @@ use std::{collections::HashMap, sync::Arc};
 use tokio_util::io::ReaderStream;
 
 pub fn setup(cli_args: &mut Args) -> Result<Router, Box<dyn std::error::Error>> {
+    tracing::info!("Transmit mode enabled. Paths: {:?}", cli_args.paths);
     cli_args.prepare_paths();
 
     if cli_args.paths.len() == 0 {
