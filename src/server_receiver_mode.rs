@@ -1,16 +1,48 @@
 use crate::cli_args::Args;
-use axum::extract::{DefaultBodyLimit, Multipart, State};
+use askama::Template;
+use axum::body::{Body, Bytes};
+use axum::extract::{DefaultBodyLimit, Multipart, Path, State};
 use axum::http;
 use axum::response::IntoResponse;
+use axum::response::Response;
 use axum::routing::get;
 use std::path::PathBuf;
 use std::sync::Arc;
 use tokio::io::AsyncWriteExt;
 use tower_http::limit::RequestBodyLimitLayer;
+use tower_http::services::ServeDir;
+
+static INDEX_HTML: &[u8] = include_bytes!("../templates/server_receiver_mode/index.html");
+static SCRIPT_JS: &[u8] = include_bytes!("../templates/server_receiver_mode/script.js");
+static STYLE_CSS: &[u8] = include_bytes!("../templates/server_receiver_mode/style.css");
+
+#[derive(Template)]
+#[template(path = "server_receiver_mode/index.html")]
+struct ReceiverTemplate {
+    max_size: usize,
+}
+
+pub async fn show_upload_form(max_total_received_file_size: State<usize>) -> impl IntoResponse {
+    tracing::info!("Root page request");
+
+    let page = ReceiverTemplate {
+        max_size: *max_total_received_file_size,
+    }
+    .render()
+    .unwrap();
+
+    axum::response::Html(page)
+}
 
 pub fn setup(cli_args: &Args) -> axum::Router {
-    tracing::info!("Receive mode enabled. Files will be saved to: {:?}", cli_args.received_files_path);
-    tracing::info!("Maximum total files size per request is {} MiB", cli_args.max_total_received_files_size);
+    tracing::info!(
+        "Receive mode enabled. Files will be saved to: {:?}",
+        cli_args.received_files_path
+    );
+    tracing::info!(
+        "Maximum total files size per request is {} MiB",
+        cli_args.max_total_received_files_size
+    );
 
     let uploads_path_state: Arc<PathBuf> = Arc::new(cli_args.received_files_path.clone().unwrap());
     let max_total_received_files_size = Arc::new(cli_args.max_total_received_files_size);
@@ -21,8 +53,11 @@ pub fn setup(cli_args: &Args) -> axum::Router {
             get(show_upload_form)
                 .with_state(*max_total_received_files_size)
                 .post(accept_upload_form)
-                .with_state(uploads_path_state),
+                .with_state(uploads_path_state.clone()),
         )
+        // .route("/index.html", get(serve_index_html))
+        .route("/script.js", get(serve_script_js))
+        .route("/style.css", get(serve_style_css))
         .layer(DefaultBodyLimit::disable())
         .layer(RequestBodyLimitLayer::new(
             cli_args.max_total_received_files_size * 1024 * 1024,
@@ -30,121 +65,25 @@ pub fn setup(cli_args: &Args) -> axum::Router {
         .layer(tower_http::trace::TraceLayer::new_for_http())
 }
 
-pub async fn show_upload_form(max_total_received_file_size: State<usize>) -> impl IntoResponse {
-    tracing::info!("Root page request");
+async fn serve_index_html() -> impl IntoResponse {
+    Response::builder()
+        .header("Content-Type", "text/html; charset=utf-8")
+        .body(Body::from(Bytes::from_static(INDEX_HTML))) // Оборачую Bytes в Body
+        .unwrap()
+}
 
-    //let html_page: String = HtmlPage::new().with_title().to_html_string();
+async fn serve_script_js() -> impl IntoResponse {
+    Response::builder()
+        .header("Content-Type", "application/javascript")
+        .body(Body::from(Bytes::from_static(SCRIPT_JS))) // Оборачую Bytes в Body
+        .unwrap()
+}
 
-    axum::response::Html(format!(
-        r#"
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Upload files</title>
-            <style>
-                ul {{ list-style-type: none; padding: 0; }}
-                li {{ margin: 5px 0; }}
-            </style>
-        </head>
-        <body>
-            <h1>Upload files</h1>
-            <p>Maximum total file size: {} MiB</p>
-            <form action="/" method="post" enctype="multipart/form-data" id="upload-form">
-                <input type="file" id="file-input" multiple>
-                <ul id="file-list"></ul>
-                <button type="submit" id="upload-button" disabled>Upload</button>
-            </form>
-
-            <script>
-                const fileInput = document.getElementById('file-input');
-                const fileList = document.getElementById('file-list');
-                const uploadButton = document.getElementById('upload-button');
-
-                let filesArray = [];
-
-                // Event listener to handle file selection
-                fileInput.addEventListener('change', (event) => {{
-                    // Add selected files to the array
-                    for (const file of event.target.files) {{
-                        filesArray.push(file);
-                    }}
-
-                    // Update the displayed file list
-                    updateFileList();
-
-                    // Enable the upload button if there are files in the array
-                    uploadButton.disabled = filesArray.length === 0;
-
-                    // Clear the file input value to allow re-selecting the same files
-                    fileInput.value = "";
-                }});
-
-                // Function to update the visual file list
-                function updateFileList() {{
-                    // Clear the current list in the HTML
-                    fileList.innerHTML = "";
-
-                    // Add each file to the visual list
-                    filesArray.forEach((file, index) => {{
-                        const li = document.createElement('li');
-                        li.textContent = `${{file.name}} (${{(file.size / 1024).toFixed(2)}} KB)`;
-
-                        // Add a remove button for each file
-                        const removeButton = document.createElement('button');
-                        removeButton.textContent = "Remove";
-                        removeButton.style.marginLeft = "10px";
-                        removeButton.addEventListener('click', () => {{
-                            // Remove the file from the array
-                            filesArray.splice(index, 1);
-                            updateFileList();
-                            // Disable the upload button if no files remain
-                            uploadButton.disabled = filesArray.length === 0;
-                        }});
-
-                        li.appendChild(removeButton);
-                        fileList.appendChild(li);
-                    }});
-                }}
-
-                // Handle form submission and send files using FormData
-                document.getElementById('upload-form').addEventListener('submit', (event) => {{
-                    event.preventDefault(); // Prevent default form submission
-                    const formData = new FormData();
-
-                    // Append each file to FormData
-                    filesArray.forEach(file => {{
-                        formData.append('files', file);
-                    }});
-
-                    // Use Fetch API to send the form data
-                    fetch("/", {{
-                        method: "POST",
-                        body: formData
-                    }})
-                    .then(response => {{
-                        if (response.ok) {{
-                            alert("Files uploaded successfully!");
-                            // Clear the file array and update the list
-                            filesArray = [];
-                            updateFileList();
-                            uploadButton.disabled = true;
-                        }} else {{
-                            alert("Failed to upload files.");
-                        }}
-                    }})
-                    .catch(error => {{
-                        console.error("Error:", error);
-                        alert("An error occurred while uploading files.");
-                    }});
-                }});
-            </script>
-        </body>
-        </html>
-    "#,
-        max_total_received_file_size.0
-    ))
+async fn serve_style_css() -> impl IntoResponse {
+    Response::builder()
+        .header("Content-Type", "text/css; charset=utf-8")
+        .body(Body::from(Bytes::from_static(STYLE_CSS))) // Оборачую Bytes в Body
+        .unwrap()
 }
 
 pub async fn accept_upload_form(

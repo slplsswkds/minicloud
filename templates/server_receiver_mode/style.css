@@ -1,0 +1,452 @@
+/*@import url('https://unpkg.com/thesims.css');*/
+
+.browse-button {
+    font-size: 1rem;
+    line-height: 1.6875rem;
+    font-family: Comic Sans MS, cursive;
+    padding: 0.5rem 1.5rem;
+    min-width: 6.25rem;
+    height: 2.5rem;
+    color: #c0c7cb;
+    position: relative;
+    border: 0;
+    background-color: transparent;
+    white-space: nowrap;
+    transition: color 1.5s ease, transform .05s ease, box-shadow .2s ease;
+    border-radius: 0.625rem;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    outline: none;
+}
+
+.browse-button:focus {
+    outline: none;
+    box-shadow: none;
+}
+
+.browse-button:hover {
+    color: #fff;
+    box-shadow: 0 0 0.25rem 0.125rem rgba(0, 0, 0, 0.8);
+}
+
+.browse-button:active {
+    color: #0ff;
+    transform: translate(0.125rem, 0.125rem);
+    box-shadow: inset 0.125rem 0.125rem 0.25rem rgba(0, 0, 0, 0.6);
+}
+
+.browse-button:before {
+    content: "";
+    display: block;
+    position: absolute;
+    z-index: -1;
+    width: 100%;
+    height: 100%;
+    border-radius: 0.625rem;
+    top: 0;
+    left: 0;
+    background-color: #00518c;
+    box-shadow: 0.125rem 0.125rem 0.25rem rgba(0, 0, 0, 0.6), /* Тінь знизу справа */ -0.125rem -0.125rem 0.25rem rgba(255, 255, 255, 0.3), /* Біле сяйво зліва і згори */ 0.125rem -0.125rem 0.25rem rgba(255, 255, 255, 0.3), /* Біле сяйво знизу справа */ -0.125rem 0.125rem 0.25rem rgba(255, 255, 255, 0.3), /* Біле сяйво знизу зліва */ inset 0 0 0.125rem 0 #000; /* Внутрішня тінь */
+    transition: box-shadow .2s ease;
+}
+
+
+/*! TheSims.css v0.1.2 - https://thesimscss.inbn.dev/ */
+@font-face {
+    font-family: Comic Sans MS;
+    src: local("Comic Sans MS"), url(ComicNeue-Regular.woff2) format("woff2"), url(ComicNeue-Regular.woff) format("woff");
+    font-weight: 400
+}
+
+*, :after, :before {
+    box-sizing: border-box
+}
+
+:root {
+    font-family: Comic Sans MS, cursive;
+    color: #c0c7cb;
+    letter-spacing: .04em
+}
+
+body {
+    background-color: #000c4b;
+    box-shadow: inset -0.0625rem -0.0625rem 0.1875rem 0.1875rem rgba(0, 0, 0, .9), inset 0.375rem 0 0.0625rem 0.0625rem hsla(0, 0%, 100%, .1), inset 0 0.25rem 0.125rem 0.0625rem hsla(0, 0%, 100%, .6);
+    padding: 1.25rem
+}
+
+button, input, label, option, select, textarea {
+    font-family: Comic Sans MS, cursive
+}
+
+:focus {
+    outline: 0.0625rem solid #fff;
+    outline-offset: 0.125rem
+}
+
+input[type=email]:focus, input[type=password]:focus, input[type=text]:focus, select:focus, textarea:focus {
+    outline-offset: -0.25rem
+}
+
+input[type=checkbox]:focus + label, input[type=radio]:focus + label {
+    outline: 0.0625rem solid #fff
+}
+
+:focus:not(:focus-visible) {
+    outline: none
+}
+
+::-webkit-scrollbar {
+    width: 1.125rem;
+    background-color: #3959a5;
+    border-radius: 0.375rem;
+    box-shadow: inset 0.0625rem 0 0.125rem 0.0625rem #062f67;
+    border: 0.0625rem solid #4b5e8e
+}
+
+::-webkit-scrollbar:horizontal {
+    height: 1.125rem
+}
+
+::-webkit-scrollbar-thumb {
+    border-radius: 0.5rem;
+    background-color: #00518c;
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='7' height='9' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7 .25H0m7 4H0m7 2H0m7 2H0m7-6H0' stroke='%2388AFC8' stroke-opacity='.51' stroke-width='.5'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: 50% 50%;
+    box-shadow: inset -0.0625rem -0.0625rem 0.1875rem 0.1875rem #062f67, inset 0.125rem 0.125rem 0.125rem 0.0625rem hsla(0, 0%, 100%, .9)
+}
+
+::-webkit-scrollbar-thumb:horizontal {
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='9' height='8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M8.5 7.5v-7m-4 7v-7m-2 7v-7m-2 7v-7m6 7v-7' stroke='%2388AFC8' stroke-opacity='.51' stroke-width='.5'/%3E%3C/svg%3E")
+}
+
+::-webkit-scrollbar-button:horizontal:end:increment, ::-webkit-scrollbar-button:horizontal:start:decrement {
+    display: block;
+    border-radius: 0.5rem;
+    background-color: #00518c;
+    background-repeat: no-repeat;
+    background-position: 50% 50%;
+    box-shadow: inset -0.0625rem -0.0625rem 0.1875rem 0.1875rem #062f67, inset 0.125rem 0.125rem 0.125rem 0.0625rem hsla(0, 0%, 100%, .9)
+}
+
+::-webkit-scrollbar-button:vertical:end:increment, ::-webkit-scrollbar-button:vertical:start:decrement {
+    display: block;
+    border-radius: 0.5rem;
+    background-color: #00518c;
+    background-repeat: no-repeat;
+    background-position: 50% 50%;
+    box-shadow: inset -0.0625rem -0.0625rem 0.1875rem 0.1875rem #062f67, inset 0.125rem 0.125rem 0.125rem 0.0625rem hsla(0, 0%, 100%, .9)
+}
+
+::-webkit-scrollbar-button:horizontal:end:increment, ::-webkit-scrollbar-button:horizontal:start:decrement {
+    width: 1.3125rem
+}
+
+::-webkit-scrollbar-button:vertical:end:increment, ::-webkit-scrollbar-button:vertical:start:decrement {
+    height: 1.3125rem
+}
+
+::-webkit-scrollbar-button:horizontal:start {
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='11' height='10' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M10 5.908V4.092H5.984V1L1 5l4.984 4V5.908H10z' fill='%236396B5' stroke='%2382ADC5' stroke-width='.5'/%3E%3C/svg%3E")
+}
+
+::-webkit-scrollbar-button:horizontal:end {
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='10' height='11' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M.5 4.592v1.816h4.016V9.5l4.984-4-4.984-4v3.092H.5z' fill='%236396B5' stroke='%2382ADC5' stroke-width='.5'/%3E%3C/svg%3E")
+}
+
+::-webkit-scrollbar-button:vertical:start {
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='10' height='11' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M4.092 10h1.816V5.984H9L5 1 1 5.984h3.092V10z' fill='%236396B5' stroke='%2382ADC5' stroke-width='.5'/%3E%3C/svg%3E")
+}
+
+::-webkit-scrollbar-button:vertical:end {
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='10' height='11' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M5.908 1H4.092v4.016H1L5 10l4-4.984H5.908V1z' fill='%236396B5' stroke='%2382ADC5' stroke-width='.5'/%3E%3C/svg%3E")
+}
+
+::-webkit-scrollbar-corner {
+    background-color: #000c4b
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-weight: 400;
+    margin: 0
+}
+
+h1 {
+    font-size: 2rem
+}
+
+h2 {
+    font-size: 1.25rem
+}
+
+h3 {
+    font-size: 1.125rem
+}
+
+a {
+    color: #c0c7cb
+}
+
+label {
+    line-height: 0.9375rem;
+    font-size: 0.75rem
+}
+
+label.block {
+    display: block;
+    margin-bottom: 0.5rem
+}
+
+input[type=email], input[type=password], input[type=text], select, textarea {
+    border: 0;
+    border-radius: 0.5625rem;
+    background-color: #000029;
+    font-size: 0.8125rem;
+    height: 1.6875rem;
+    padding: 0.25rem 0.5625rem;
+    color: #fff;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    box-shadow: 0 0 0.0625rem 0.1875rem #000030, 0 0 0.0625rem 0.25rem #00004a, 0.1875rem 0.125rem 0.0625rem 0.0625rem #fff, 0.125rem 0.125rem 0.0625rem 0.0625rem #fff, inset -0.0625rem -0.0625rem 0.0625rem 0.25rem rgba(0, 0, 48, .9), inset 0.1875rem 0 0.0625rem 0.0625rem hsla(0, 0%, 100%, .1), inset 0.0625rem 0.125rem 0.0625rem 0.0625rem hsla(0, 0%, 100%, .8)
+}
+
+textarea {
+    height: auto;
+    resize: none
+}
+
+input[type=checkbox], input[type=radio] {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    margin: 0;
+    background: 0;
+    position: fixed;
+    opacity: 0;
+    border: none
+}
+
+input[type=radio] + label {
+    position: relative;
+    margin-left: 1.6875rem
+}
+
+input[type=radio] + label:before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -1.6875rem;
+    display: inline-block;
+    width: 0.9375rem;
+    height: 0.9375rem;
+    margin-right: 0.75rem;
+    border: 0.0625rem solid #c0c7cb;
+    border-radius: 50%;
+    box-shadow: 0.0625rem 0.0625rem 0.0625rem 0 rgba(0, 0, 0, .8), inset 0.0625rem 0.0625rem 0.0625rem 0 rgba(0, 0, 0, .8)
+}
+
+input[type=radio]:checked + label:before {
+    border-color: #0ff
+}
+
+input[type=radio]:checked + label:after {
+    content: "";
+    display: block;
+    width: 0.5625rem;
+    height: 0.5625rem;
+    top: 0.1875rem;
+    left: -1.5rem;
+    position: absolute;
+    background: url("data:image/svg+xml;charset=utf-8,%3Csvg width='11' height='11' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg filter='url(%23filter0_d)'%3E%3Ccircle cx='4.5' cy='4.5' r='4.5' fill='%230FF'/%3E%3C/g%3E%3Cdefs%3E%3Cfilter id='filter0_d' x='0' y='0' width='11' height='11' filterUnits='userSpaceOnUse' color-interpolation-filters='sRGB'%3E%3CfeFlood flood-opacity='0' result='BackgroundImageFix'/%3E%3CfeColorMatrix in='SourceAlpha' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0'/%3E%3CfeOffset dx='1' dy='1'/%3E%3CfeGaussianBlur stdDeviation='.5'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.75 0'/%3E%3CfeBlend in2='BackgroundImageFix' result='effect1_dropShadow'/%3E%3CfeBlend in='SourceGraphic' in2='effect1_dropShadow' result='shape'/%3E%3C/filter%3E%3C/defs%3E%3C/svg%3E")
+}
+
+input[type=checkbox] + label {
+    position: relative;
+    margin-left: 1.6875rem
+}
+
+input[type=checkbox] + label:before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -1.6875rem;
+    display: inline-block;
+    width: 0.9375rem;
+    height: 0.9375rem;
+    border: 0.0625rem solid #c0c7cb;
+    border-radius: 0.125rem;
+    box-shadow: 0.0625rem 0.0625rem 0.0625rem 0 rgba(0, 0, 0, .8), inset 0.0625rem 0.0625rem 0.0625rem 0 rgba(0, 0, 0, .8);
+    margin-right: 0.75rem
+}
+
+input[type=checkbox]:checked + label:before {
+    border-color: #0ff
+}
+
+input[type=checkbox]:checked + label:after {
+    content: "";
+    display: block;
+    width: 0.8125rem;
+    height: 0.8125rem;
+    position: absolute;
+    top: 0.0625rem;
+    left: -1.625rem;
+    background: url("data:image/svg+xml;charset=utf-8,%3Csvg width='14' height='14' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg filter='url(%23filter0_d)'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M2 1a1 1 0 00-1 1v9a1 1 0 001 1h9a1 1 0 001-1V2a1 1 0 00-1-1H2zm0 2l3.44 3.44-3.5 3.5L3 11l3.5-3.5L10 11l1.06-1.06-3.5-3.5L11 3 9.94 1.94 6.5 5.378l-3.44-3.44L2 3z' fill='%230FF'/%3E%3C/g%3E%3Cdefs%3E%3Cfilter id='filter0_d' x='.5' y='.5' width='13' height='13' filterUnits='userSpaceOnUse' color-interpolation-filters='sRGB'%3E%3CfeFlood flood-opacity='0' result='BackgroundImageFix'/%3E%3CfeColorMatrix in='SourceAlpha' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0'/%3E%3CfeOffset dx='.5' dy='.5'/%3E%3CfeGaussianBlur stdDeviation='.5'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.75 0'/%3E%3CfeBlend in2='BackgroundImageFix' result='effect1_dropShadow'/%3E%3CfeBlend in='SourceGraphic' in2='effect1_dropShadow' result='shape'/%3E%3C/filter%3E%3C/defs%3E%3C/svg%3E")
+}
+
+input[type=checkbox] + label:hover, input[type=radio] + label:hover {
+    color: #fff
+}
+
+input[type=checkbox] + label:hover:before, input[type=radio] + label:hover:before {
+    border-color: #fff
+}
+
+input[type=range] {
+    -webkit-appearance: none;
+    width: 100%;
+    background: transparent
+}
+
+input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    height: 0.8125rem;
+    width: 0.4375rem;
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='7' height='13' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M3.5 0c2.848 0 4.018 1.757 3.288 2.467-.73.71-5.846.71-6.576 0C-.518 1.757.652 0 3.5 0zM3.5 13C.652 13-.518 11.243.212 10.533c.73-.71 5.846-.71 6.576 0 .73.71-.44 2.467-3.288 2.467z' fill='%23EFF7FF'/%3E%3Cpath d='M3 2h1v9H3V2z' fill='%23EFF7FF'/%3E%3C/svg%3E");
+    transform: translateY(-0.34375rem);
+    filter: drop-shadow(0 0 0.0625rem #000)
+}
+
+input[type=range]::-moz-range-thumb {
+    height: 0.8125rem;
+    width: 0.4375rem;
+    border: 0;
+    border-radius: 0;
+    background: url("data:image/svg+xml;charset=utf-8,%3Csvg width='7' height='13' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M3.5 0c2.848 0 4.018 1.757 3.288 2.467-.73.71-5.846.71-6.576 0C-.518 1.757.652 0 3.5 0zM3.5 13C.652 13-.518 11.243.212 10.533c.73-.71 5.846-.71 6.576 0 .73.71-.44 2.467-3.288 2.467z' fill='%23EFF7FF'/%3E%3Cpath d='M3 2h1v9H3V2z' fill='%23EFF7FF'/%3E%3C/svg%3E");
+    filter: drop-shadow(0 0 0.0625rem #000)
+}
+
+input[type=range]::-webkit-slider-runnable-track {
+    width: 100%;
+    height: 0.375rem;
+    box-sizing: border-box;
+    background: transparent;
+    border-color: #c0c7cb;
+    border-style: solid;
+    border-width: 0.125rem 0.1875rem;
+    border-radius: 0.1875rem;
+    box-shadow: 0.0625rem 0.0625rem 0.0625rem #000, inset 0.0625rem 0.0625rem 0 #000
+}
+
+input[type=range]::-moz-range-track {
+    width: 100%;
+    height: 0.375rem;
+    box-sizing: border-box;
+    background: transparent;
+    border-color: #c0c7cb;
+    border-style: solid;
+    border-width: 0.125rem 0.1875rem;
+    border-radius: 0.1875rem;
+    box-shadow: 0.0625rem 0.0625rem 0 #000, inset 0.0625rem 0.0625rem 0 #000
+}
+
+button {
+    font-size: 1rem;
+    line-height: 1.6875rem;
+    font-family: Comic Sans MS, cursive;
+    min-width: 6.25rem;
+    height: 1.6875rem;
+    color: #c0c7cb;
+    position: relative;
+    border: 0;
+    padding: 0 1.5rem;
+    background-color: transparent;
+    white-space: nowrap;
+    transition: color .05s ease, transform .05s ease
+}
+
+button:hover {
+    color: #fff
+}
+
+button:active {
+    color: #0ff;
+    transform: translate(0.125rem, 0.125rem)
+}
+
+button:before {
+    content: "";
+    display: block;
+    position: absolute;
+    z-index: -1;
+    width: 100%;
+    height: 1.6875rem;
+    border-radius: 0.625rem;
+    top: 0;
+    left: 0;
+    border: 0;
+    background-color: #00518c;
+    box-shadow: -0.0625rem -0.0625rem 0.125rem 0 #000, 0.09375rem 0.03125rem 0.0625rem 0 hsla(0, 0%, 100%, .5), inset 0 0 0.125rem 0.1875rem #062f67, inset 0.125rem 0.0625rem 0.0625rem 0.125rem #fff
+}
+
+button.skew:before {
+    width: calc(100% - 0.5915rem);
+    left: -0.29575rem;
+    border-radius: 0.75rem/1rem;
+    transform: skew(-36deg);
+    transform-origin: left bottom
+}
+
+.button-group {
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: wrap;
+    margin-bottom: -0.5rem
+}
+
+.button-group > * {
+    margin-bottom: 0.5rem
+}
+
+.modal {
+    max-width: 34.1875rem;
+    position: relative;
+    padding: 1.3125rem;
+    box-shadow: inset -0.0625rem -0.0625rem 0.1875rem 0.1875rem rgba(0, 0, 0, .9), inset 0.375rem 0 0.0625rem 0.0625rem hsla(0, 0%, 100%, .1), inset 0 0.25rem 0.125rem 0.0625rem hsla(0, 0%, 100%, .6)
+}
+
+.modal h2 {
+    text-align: center
+}
+
+.modal img {
+    float: left;
+    margin-right: 1rem;
+    margin-bottom: 0.5rem
+}
+
+.field-row {
+    display: flex;
+    align-items: center
+}
+
+[class^=field-row] + [class^=field-row] {
+    margin-top: 0.375rem
+}
+
+.field-row > * + * {
+    margin-left: 0.375rem
+}
+
+.field-row-stacked {
+    display: flex;
+    flex-direction: column
+}
+
+.field-row-stacked * + * {
+    margin-top: 0.375rem
+}
+
+/*# sourceMappingURL=thesims.css.map */
