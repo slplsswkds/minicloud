@@ -1,7 +1,7 @@
 use crate::cli_args::Args;
 use askama::Template;
 use axum::body::{Body, Bytes};
-use axum::extract::{DefaultBodyLimit, Multipart, Path, State};
+use axum::extract::{DefaultBodyLimit, Multipart, State};
 use axum::http;
 use axum::response::IntoResponse;
 use axum::response::Response;
@@ -10,9 +10,8 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use tokio::io::AsyncWriteExt;
 use tower_http::limit::RequestBodyLimitLayer;
-use tower_http::services::ServeDir;
 
-static INDEX_HTML: &[u8] = include_bytes!("../templates/server_receiver_mode/index.html");
+// static INDEX_HTML: &[u8] = include_bytes!("../templates/server_receiver_mode/index.html");
 static SCRIPT_JS: &[u8] = include_bytes!("../templates/server_receiver_mode/script.js");
 static STYLE_CSS: &[u8] = include_bytes!("../templates/server_receiver_mode/style.css");
 
@@ -65,24 +64,24 @@ pub fn setup(cli_args: &Args) -> axum::Router {
         .layer(tower_http::trace::TraceLayer::new_for_http())
 }
 
-async fn serve_index_html() -> impl IntoResponse {
-    Response::builder()
-        .header("Content-Type", "text/html; charset=utf-8")
-        .body(Body::from(Bytes::from_static(INDEX_HTML))) // Оборачую Bytes в Body
-        .unwrap()
-}
+// async fn serve_index_html() -> impl IntoResponse {
+//     Response::builder()
+//         .header("Content-Type", "text/html; charset=utf-8")
+//         .body(Body::from(Bytes::from_static(INDEX_HTML)))
+//         .unwrap()
+// }
 
 async fn serve_script_js() -> impl IntoResponse {
     Response::builder()
         .header("Content-Type", "application/javascript")
-        .body(Body::from(Bytes::from_static(SCRIPT_JS))) // Оборачую Bytes в Body
+        .body(Body::from(Bytes::from_static(SCRIPT_JS)))
         .unwrap()
 }
 
 async fn serve_style_css() -> impl IntoResponse {
     Response::builder()
         .header("Content-Type", "text/css; charset=utf-8")
-        .body(Body::from(Bytes::from_static(STYLE_CSS))) // Оборачую Bytes в Body
+        .body(Body::from(Bytes::from_static(STYLE_CSS)))
         .unwrap()
 }
 

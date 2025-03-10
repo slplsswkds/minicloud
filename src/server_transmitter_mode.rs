@@ -1,7 +1,8 @@
 use crate::cli_args::Args;
 use crate::fs_object::{show_fs_objects_summary, FsObject};
-use crate::html_page;
+use crate::html_page_utils::{unordered_list};
 use crate::storage::content_recursively;
+use askama::Template;
 use axum::routing::get;
 use axum::{
     body::Body,
@@ -13,6 +14,18 @@ use axum::{
 use serde::Deserialize;
 use std::{collections::HashMap, sync::Arc};
 use tokio_util::io::ReaderStream;
+
+#[derive(Template)]
+#[template(path = "server_transmitter_mode/index.html", escape = "none")]
+struct TransmitterTemplate {
+    title: String,
+    files_list: String,
+}
+
+async fn show_download_form(page: State<Arc<Html<String>>>) -> impl IntoResponse {
+    tracing::info!("Root page request");
+    page.as_ref().clone()
+}
 
 pub fn setup(cli_args: &mut Args) -> Result<Router, Box<dyn std::error::Error>> {
     tracing::info!("Transmit mode enabled. Paths: {:?}", cli_args.paths);
@@ -29,23 +42,30 @@ pub fn setup(cli_args: &mut Args) -> Result<Router, Box<dyn std::error::Error>> 
     show_fs_objects_summary(&fs_objects);
 
     tracing::debug!("Generating HTML...");
-    let (page, fs_objects_hash_map) = html_page::html_page(&fs_objects);
+    let title = format!("Minicloud v{}", env!("CARGO_PKG_VERSION"));
+
+    let mut hash_map = HashMap::new();
+    let files_list = unordered_list(&fs_objects, &mut hash_map);
+
+    let page = TransmitterTemplate { title, files_list }.render().unwrap();
     tracing::debug!("HTML generated.");
 
-    let fs_objects_hash_map_state = Arc::new(fs_objects_hash_map);
+    let fs_objects_hash_map_state = Arc::new(hash_map);
+    println!("{} {}", { "{}" }, page);
+    let html_page = Arc::new(Html(page));
 
     let router = Router::new()
-        .route("/", get(root_handler).with_state(Arc::new(Html(page))))
-        .route("/dl", get(download_handler).with_state(fs_objects_hash_map_state.clone()))
-        .route("/pw", get(preview_handler).with_state(fs_objects_hash_map_state))
+        .route("/", get(show_download_form).with_state(html_page))
+        .route(
+            "/dl",
+            get(download_handler).with_state(fs_objects_hash_map_state.clone()),
+        )
+        .route(
+            "/pw",
+            get(preview_handler).with_state(fs_objects_hash_map_state),
+        )
         .layer(tower_http::trace::TraceLayer::new_for_http());
-
     Ok(router)
-}
-
-pub async fn root_handler(page: State<Arc<Html<String>>>) -> impl IntoResponse {
-    tracing::info!("Root page request");
-    (**page).clone()
 }
 
 #[derive(Deserialize)]
@@ -71,7 +91,12 @@ async fn prepare_response(
 
     let file = match tokio::fs::File::open(&fs_object.path).await {
         Ok(file) => file,
-        Err(err) => return Err((http::StatusCode::NOT_FOUND, format!("File not found: {}", err))),
+        Err(err) => {
+            return Err((
+                http::StatusCode::NOT_FOUND,
+                format!("File not found: {}", err),
+            ))
+        }
     };
 
     let stream = ReaderStream::new(file);
