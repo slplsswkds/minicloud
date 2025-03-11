@@ -4,6 +4,7 @@ mod html_page_utils;
 mod server_receiver_mode;
 mod server_transmitter_mode;
 mod storage;
+mod style;
 
 use clap::Parser;
 use std::net::SocketAddr;

@@ -1,4 +1,5 @@
 use crate::cli_args::Args;
+use crate::style::STYLE_CSS;
 use askama::Template;
 use axum::body::{Body, Bytes};
 use axum::extract::{DefaultBodyLimit, Multipart, State};
@@ -13,11 +14,11 @@ use tower_http::limit::RequestBodyLimitLayer;
 
 // static INDEX_HTML: &[u8] = include_bytes!("../templates/server_receiver_mode/index.html");
 static SCRIPT_JS: &[u8] = include_bytes!("../templates/server_receiver_mode/script.js");
-static STYLE_CSS: &[u8] = include_bytes!("../templates/server_receiver_mode/style.css");
 
 #[derive(Template)]
 #[template(path = "server_receiver_mode/index.html")]
 struct ReceiverTemplate {
+    title: String,
     max_size: usize,
 }
 
@@ -25,6 +26,7 @@ pub async fn show_upload_form(max_total_received_file_size: State<usize>) -> imp
     tracing::info!("Root page request");
 
     let page = ReceiverTemplate {
+        title: format!("Minicloud v{}", env!("CARGO_PKG_VERSION")),
         max_size: *max_total_received_file_size,
     }
     .render()
@@ -63,13 +65,6 @@ pub fn setup(cli_args: &Args) -> axum::Router {
         ))
         .layer(tower_http::trace::TraceLayer::new_for_http())
 }
-
-// async fn serve_index_html() -> impl IntoResponse {
-//     Response::builder()
-//         .header("Content-Type", "text/html; charset=utf-8")
-//         .body(Body::from(Bytes::from_static(INDEX_HTML)))
-//         .unwrap()
-// }
 
 async fn serve_script_js() -> impl IntoResponse {
     Response::builder()

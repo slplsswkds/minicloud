@@ -1,4 +1,4 @@
-//! This module created to scan filesystem and store files in tree-style.
+//! This module created to scan filesystem and store files in tree-style
 
 use std::{
     ffi::OsStr,

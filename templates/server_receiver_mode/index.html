@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Upload files</title>
+    <title> {{ title }} </title>
     <link rel="stylesheet" href="style.css">
     <script defer src="script.js"></script>
 </head>
 <body>
-<h1>Upload files</h1>
+<h1>Upload files | <a href="https://github.com/slplsswkds/minicloud"> {{ title }} </a> </h1>
 <p>Maximum total files size: {{ max_size }} MiB</p>
 <form action="/" method="post" enctype="multipart/form-data" id="upload-form">
     <input type="file" id="file-input" multiple style="display:none;">

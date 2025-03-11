@@ -1,5 +1,38 @@
 /*@import url('https://unpkg.com/thesims.css');*/
 
+ul,
+#myUL {
+    list-style-type: none;
+}
+
+#myUL {
+    margin: 0;
+    padding: 0;
+}
+
+.caret::before {
+    content: "\\25B6";
+    color: black;
+    display: inline-block;
+    margin-right: 5px;
+}
+
+.caret-down::before {
+    -ms-transform: rotate(90deg);
+    /* IE 9 */
+    -webkit-transform: rotate(90deg);
+    /* Safari */
+    transform: rotate(90deg);
+}
+
+.nested {
+    display: none;
+}
+
+.active {
+    display: block;
+}
+
 .browse-button {
     font-size: 1rem;
     line-height: 1.6875rem;

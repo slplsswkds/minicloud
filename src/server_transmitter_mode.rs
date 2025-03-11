@@ -1,8 +1,11 @@
 use crate::cli_args::Args;
 use crate::fs_object::{show_fs_objects_summary, FsObject};
-use crate::html_page_utils::{unordered_list};
+use crate::html_page_utils::unordered_list;
 use crate::storage::content_recursively;
+use crate::style::STYLE_CSS;
 use askama::Template;
+use axum::body::Bytes;
+use axum::response::Response;
 use axum::routing::get;
 use axum::{
     body::Body,
@@ -14,6 +17,8 @@ use axum::{
 use serde::Deserialize;
 use std::{collections::HashMap, sync::Arc};
 use tokio_util::io::ReaderStream;
+
+static SCRIPT_JS: &[u8] = include_bytes!("../templates/server_transmitter_mode/script.js");
 
 #[derive(Template)]
 #[template(path = "server_transmitter_mode/index.html", escape = "none")]
@@ -35,10 +40,7 @@ pub fn setup(cli_args: &mut Args) -> Result<Router, Box<dyn std::error::Error>> 
         return Err("No one valid paths provided".into()); // Returning early with an error
     }
 
-    // Get files tree
     let fs_objects = content_recursively(&cli_args.paths)?;
-
-    // Info about obtained files, directories, and symbolic links
     show_fs_objects_summary(&fs_objects);
 
     tracing::debug!("Generating HTML...");
@@ -51,7 +53,6 @@ pub fn setup(cli_args: &mut Args) -> Result<Router, Box<dyn std::error::Error>> 
     tracing::debug!("HTML generated.");
 
     let fs_objects_hash_map_state = Arc::new(hash_map);
-    println!("{} {}", { "{}" }, page);
     let html_page = Arc::new(Html(page));
 
     let router = Router::new()
@@ -64,8 +65,24 @@ pub fn setup(cli_args: &mut Args) -> Result<Router, Box<dyn std::error::Error>> 
             "/pw",
             get(preview_handler).with_state(fs_objects_hash_map_state),
         )
+        .route("/script.js", get(serve_script_js))
+        .route("/style.css", get(serve_style_css))
         .layer(tower_http::trace::TraceLayer::new_for_http());
     Ok(router)
+}
+
+async fn serve_script_js() -> impl IntoResponse {
+    Response::builder()
+        .header("Content-Type", "application/javascript")
+        .body(Body::from(Bytes::from_static(SCRIPT_JS)))
+        .unwrap()
+}
+
+async fn serve_style_css() -> impl IntoResponse {
+    Response::builder()
+        .header("Content-Type", "text/css; charset=utf-8")
+        .body(Body::from(Bytes::from_static(STYLE_CSS)))
+        .unwrap()
 }
 
 #[derive(Deserialize)]
