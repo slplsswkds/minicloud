@@ -43,8 +43,6 @@ pub fn setup(cli_args: &mut Args) -> Result<Router, Box<dyn std::error::Error>> 
     let fs_objects = content_recursively(&cli_args.paths)?;
     show_fs_objects_summary(&fs_objects);
 
-    std::process::exit(0);
-
     tracing::debug!("Generating HTML...");
     let title = format!("Minicloud v{}", env!("CARGO_PKG_VERSION"));
 
