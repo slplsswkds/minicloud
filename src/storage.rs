@@ -73,11 +73,15 @@ fn read_dir_content(path: &Path) -> Result<Vec<PathBuf>> {
         .collect()
 }
 
-/// Gets metadata for a given path (handling symbolic links)
+#[inline]
 fn get_metadata(path: &Path) -> Result<fs::Metadata> {
-    if path.is_symlink() {
-        path.symlink_metadata()
-    } else {
-        path.metadata()
-    }
+    path.metadata().or_else(|err| {
+        match err.kind() {
+            std::io::ErrorKind::NotFound => {
+                // Maybe it's symbolic link...
+                path.symlink_metadata()
+            }
+            _ => Err(err),
+        }
+    })
 }
