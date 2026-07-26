@@ -29,11 +29,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         false => app = server_transmitter_mode::setup(&mut cli_args)?,
     };
 
-    //----------------------------------------------
-
     let local_ip = local_ip_address::local_ip()?;
     let socket_addr = SocketAddr::new(local_ip, cli_args.port);
-    let listener = tokio::net::TcpListener::bind(socket_addr);
+    let listener = tokio::net::TcpListener::bind(socket_addr).await?;
 
     tracing::info!(
         "Listening on http://{}:{}",
@@ -41,7 +39,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         socket_addr.port()
     );
 
-    axum::serve(listener.await?, app).await?;
+    axum::serve(listener, app).await?;
 
     Ok(())
 }
