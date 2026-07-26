@@ -50,7 +50,7 @@ impl FsObject {
         self.path
             .file_name()
             .and_then(OsStr::to_str)
-            .expect(&format!("Failed to retrieve file name: {:?}", &self.path))
+            .unwrap_or("unnamed")
     }
 
     pub fn size_string(&self) -> String {
