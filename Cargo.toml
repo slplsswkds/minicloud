@@ -32,17 +32,16 @@ rustflags = ["-C", "link-arg=-fuse-ld=lld"]
 linker = "rust-lld.exe"
 
 [dependencies]
-tracing = "0.1.41"
-tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
-clap = { version = "4.5.27", features = ["derive"] }  # --- Arguments parsing
-#wild = "2.2.0"  # --- Augment clap: for supporting wildcards (*) on Windows like you do on Linux
-tokio = { version = "1.43.0", features = ["full"] }
-axum = { version = "0.8.1", features = ["multipart"] }
-local-ip-address = "0.6.3"
-serde = { version = "1.0", features = ["derive"] }  # query requests
-tokio-util = { version = "0.7.13", features = ["io"] } # files uploading
-mime_guess = { version = "2.0.5" } # for file preview
-#html = "0.6.3"
-tower-http = { version = "0.6.2", features = ["limit", "trace"] }
-askama = "0.12.1"
-askama_axum = "0.4.0"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+clap = { version = "4", features = ["derive"] }
+#wild = "2.2"  # --- Augment clap: for supporting wildcards (*) on Windows like you do on Linux
+# tokio = { version = "1", features = ["full"] }
+tokio = { version = "1", features = ["full"] }
+axum = { version = "0.8", features = ["multipart"] }
+local-ip-address = "0.6"
+serde = { version = "1", features = ["derive"] }
+tokio-util = { version = "0.7", features = ["io"] }
+mime_guess = "2"
+tower-http = { version = "0.7", features = ["limit", "trace"] }
+askama = "0.16"
