@@ -40,7 +40,7 @@ fn list_item(item: &Arc<FsObject>, hash_map: &mut HashMap<u64, Arc<FsObject>>) -
         format!(
             "<li>🗋 {}, {} {}</li>\n",
             href(item.name().as_ref(), url_download_item(hash_key).as_ref()),
-            item.size(),
+            item.size_string(),
             href("[view]", url_preview_item(hash_key).as_ref()),
         )
     }

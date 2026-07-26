@@ -8,12 +8,6 @@ use std::{
     sync::Arc,
 };
 
-#[cfg(target_family = "unix")]
-use std::os::unix::fs::MetadataExt;
-
-#[cfg(target_family = "windows")]
-use std::os::windows::prelude::*;
-
 use std::string::String;
 
 pub type FsObjects = Vec<Arc<FsObject>>;
@@ -59,20 +53,8 @@ impl FsObject {
             .expect(&format!("Failed to retrieve file name: {:?}", &self.path))
     }
 
-    pub fn size(&self) -> String {
-        let size_string;
-
-        #[cfg(target_family = "unix")]
-        {
-            size_string = format!("{} kB", self.metadata.size() / 1000);
-        }
-
-        #[cfg(target_family = "windows")]
-        {
-            size_string = format!("{} kB", self.metadata.file_size() / 1000);
-        }
-
-        size_string
+    pub fn size_string(&self) -> String {
+        format!("{} kB", self.metadata.len() / 1000)
     }
 
     /// Return iterator over each FSObject
