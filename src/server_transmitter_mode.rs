@@ -4,85 +4,32 @@ use crate::html_page_utils::unordered_list;
 use crate::storage::content_recursively;
 use crate::style::STYLE_CSS;
 use askama::Template;
-use axum::body::Bytes;
-use axum::response::Response;
-use axum::routing::get;
 use axum::{
-    body::Body,
-    extract::{Query, State},
-    http,
-    response::{Html, IntoResponse},
+    body::Bytes,
+    extract::{Query, Request, State},
+    http::{header, HeaderValue, StatusCode},
+    response::{Html, IntoResponse, Response},
+    routing::get,
     Router,
 };
 use serde::Deserialize;
 use std::{collections::HashMap, sync::Arc};
-use tokio_util::io::ReaderStream;
+use tower::ServiceExt;
+use tower_http::{services::ServeFile, trace::TraceLayer};
 
 static SCRIPT_JS: &[u8] = include_bytes!("../templates/server_transmitter_mode/script.js");
+const APP_TITLE: &str = concat!("Minicloud v", env!("CARGO_PKG_VERSION"));
+
+#[derive(Clone)]
+pub struct TransmitterState {
+    pub fs_objects: Arc<HashMap<u64, Arc<FsObject>>>,
+}
 
 #[derive(Template)]
 #[template(path = "server_transmitter_mode/index.html", escape = "none")]
-struct TransmitterTemplate {
-    title: String,
+struct TransmitterTemplate<'a> {
+    title: &'a str,
     files_list: String,
-}
-
-async fn show_download_form(page: State<Arc<Html<String>>>) -> impl IntoResponse {
-    tracing::info!("Root page request");
-    page.as_ref().clone()
-}
-
-pub fn setup(cli_args: &mut Args) -> Result<Router, Box<dyn std::error::Error>> {
-    tracing::info!("Transmit mode enabled. Paths: {:?}", cli_args.paths);
-    cli_args.prepare_paths();
-
-    if cli_args.paths.len() == 0 {
-        return Err("No one valid paths provided".into()); // Returning early with an error
-    }
-
-    let fs_objects = content_recursively(&cli_args.paths)?;
-    show_fs_objects_summary(&fs_objects);
-
-    tracing::debug!("Generating HTML...");
-    let title = format!("Minicloud v{}", env!("CARGO_PKG_VERSION"));
-
-    let mut hash_map = HashMap::new();
-    let files_list = unordered_list(&fs_objects, &mut hash_map);
-
-    let page = TransmitterTemplate { title, files_list }.render().unwrap();
-    tracing::debug!("HTML generated.");
-
-    let fs_objects_hash_map_state = Arc::new(hash_map);
-    let html_page = Arc::new(Html(page));
-
-    let router = Router::new()
-        .route("/", get(show_download_form).with_state(html_page))
-        .route(
-            "/dl",
-            get(download_handler).with_state(fs_objects_hash_map_state.clone()),
-        )
-        .route(
-            "/pw",
-            get(preview_handler).with_state(fs_objects_hash_map_state),
-        )
-        .route("/script.js", get(serve_script_js))
-        .route("/style.css", get(serve_style_css))
-        .layer(tower_http::trace::TraceLayer::new_for_http());
-    Ok(router)
-}
-
-async fn serve_script_js() -> impl IntoResponse {
-    Response::builder()
-        .header("Content-Type", "application/javascript")
-        .body(Body::from(Bytes::from_static(SCRIPT_JS)))
-        .unwrap()
-}
-
-async fn serve_style_css() -> impl IntoResponse {
-    Response::builder()
-        .header("Content-Type", "text/css; charset=utf-8")
-        .body(Body::from(Bytes::from_static(STYLE_CSS)))
-        .unwrap()
 }
 
 #[derive(Deserialize)]
@@ -90,83 +37,121 @@ pub struct Params {
     id: u64,
 }
 
-/// function used to avoid code duplication in download_handler() and preview_handler.
-/// Gets an FSObject from a HashMap based on the hash and creates a file read stream
-/// and returns the stream and FSObject
-async fn prepare_response(
-    state: &Arc<HashMap<u64, Arc<FsObject>>>,
-    query: &Query<Params>,
-) -> Result<(Arc<FsObject>, ReaderStream<tokio::fs::File>), (http::StatusCode, String)> {
-    let fs_object = match state.get(&query.id) {
-        Some(fs_obj) => fs_obj.clone(),
-        None => {
-            tracing::warn!("Item not found. ID = {}", &query.id);
-            let err_msg = format!("Unexpected error. Item not found. ID = {}", &query.id);
-            return Err((http::StatusCode::NOT_FOUND, err_msg));
-        }
+pub fn setup(cli_args: &mut Args) -> Result<Router, Box<dyn std::error::Error>> {
+    tracing::info!("Transmit mode enabled. Paths: {:?}", cli_args.paths);
+    cli_args.prepare_paths();
+
+    if cli_args.paths.is_empty() {
+        return Err("No valid paths provided".into());
+    }
+
+    let fs_objects = content_recursively(&cli_args.paths)?;
+    show_fs_objects_summary(&fs_objects);
+
+    tracing::debug!("Generating HTML...");
+
+    let mut hash_map = HashMap::new();
+    let files_list = unordered_list(&fs_objects, &mut hash_map);
+
+    let html_page = TransmitterTemplate {
+        title: APP_TITLE,
+        files_list,
+    }
+    .render()?;
+
+    tracing::debug!("HTML generated.");
+
+    let state = TransmitterState {
+        fs_objects: Arc::new(hash_map),
     };
 
-    let file = match tokio::fs::File::open(&fs_object.path).await {
-        Ok(file) => file,
-        Err(err) => {
-            return Err((
-                http::StatusCode::NOT_FOUND,
-                format!("File not found: {}", err),
-            ))
-        }
-    };
+    let page_bytes = Bytes::from(html_page);
 
-    let stream = ReaderStream::new(file);
+    let router = Router::new()
+        .route(
+            "/",
+            get({
+                let bytes = page_bytes.clone();
+                move || async move { Html(bytes.clone()) }
+            }),
+        )
+        .route("/dl", get(download_handler))
+        .route("/pw", get(preview_handler))
+        .route("/script.js", get(serve_script_js))
+        .route("/style.css", get(serve_style_css))
+        .layer(TraceLayer::new_for_http())
+        .with_state(state);
 
-    Ok((fs_object, stream))
+    Ok(router)
+}
+
+async fn serve_script_js() -> impl IntoResponse {
+    (
+        [(header::CONTENT_TYPE, "application/javascript")],
+        SCRIPT_JS,
+    )
+}
+
+async fn serve_style_css() -> impl IntoResponse {
+    (
+        [(header::CONTENT_TYPE, "text/css; charset=utf-8")],
+        STYLE_CSS,
+    )
 }
 
 pub async fn download_handler(
-    fs_objects_hash_map_state: State<Arc<HashMap<u64, Arc<FsObject>>>>,
-    query: Query<Params>,
-) -> Result<impl IntoResponse, (http::StatusCode, String)> {
-    let (fs_object, stream) = prepare_response(&fs_objects_hash_map_state, &query).await?;
+    State(state): State<TransmitterState>,
+    Query(params): Query<Params>,
+    request: Request,
+) -> Result<Response, StatusCode> {
+    let fs_object = state.fs_objects.get(&params.id).ok_or_else(|| {
+        tracing::warn!("Download item not found. ID = {}", params.id);
+        StatusCode::NOT_FOUND
+    })?;
 
     tracing::info!("Download request: {}", fs_object.path.display());
 
-    let body = Body::from_stream(stream);
+    let mut response = ServeFile::new(&fs_object.path)
+        .oneshot(request)
+        .await
+        .map_err(|err| {
+            tracing::error!("Failed to serve file for download: {err}");
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?
+        .into_response();
 
-    let mut headers = http::HeaderMap::new();
-    headers.insert(
-        http::header::CONTENT_DISPOSITION,
-        format!("attachment; filename=\"{}\"", fs_object.name())
-            .parse()
-            .unwrap(),
-    );
+    let filename = fs_object.name().replace('"', "\\\"");
+    let disposition = format!("attachment; filename=\"{}\"", filename);
 
-    Ok((http::StatusCode::OK, headers, body))
+    if let Ok(val) = HeaderValue::try_from(disposition) {
+        response
+            .headers_mut()
+            .insert(header::CONTENT_DISPOSITION, val);
+    }
+
+    Ok(response)
 }
 
 pub async fn preview_handler(
-    state: State<Arc<HashMap<u64, Arc<FsObject>>>>,
-    query: Query<Params>,
-) -> impl IntoResponse {
-    let (fs_object, stream) = prepare_response(&state, &query).await?;
+    State(state): State<TransmitterState>,
+    Query(params): Query<Params>,
+    request: Request,
+) -> Result<Response, StatusCode> {
+    let fs_object = state.fs_objects.get(&params.id).ok_or_else(|| {
+        tracing::warn!("Preview item not found. ID = {}", params.id);
+        StatusCode::NOT_FOUND
+    })?;
 
     tracing::info!("Preview request: {}", fs_object.path.display());
 
-    let body = Body::from_stream(stream);
+    let response = ServeFile::new(&fs_object.path)
+        .oneshot(request)
+        .await
+        .map_err(|err| {
+            tracing::error!("Failed to serve file for preview: {err}");
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?
+        .into_response();
 
-    let content_type = match mime_guess::from_path(&fs_object.path).first_raw() {
-        Some(mime) => mime,
-        None => {
-            tracing::warn!(
-                "Could not preview file: MIME Type couldn't be determined for file: {}",
-                fs_object.path.display()
-            );
-            return Err((
-                http::StatusCode::BAD_REQUEST,
-                "MIME Type couldn't be determined".to_string(),
-            ));
-        }
-    };
-
-    let headers = [(http::header::CONTENT_TYPE, content_type)];
-
-    Ok((http::StatusCode::OK, headers, body))
+    Ok(response)
 }

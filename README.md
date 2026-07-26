@@ -23,7 +23,7 @@ cargo build --release
 - [x] Generate an HTML page in the form of a tree
 - [x] Hashing items in the hyperlinks
 - [x] Chunked uploading to server
-- [ ] Chunked downloading from server
+- [x] Chunked downloading from server
 - [x] Linux support
 - [x] Windows support
 - [ ] Downloading the entire directory

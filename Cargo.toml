@@ -1,6 +1,6 @@
 [package]
 name = "minicloud"
-version = "0.15.1"
+version = "0.16.0"
 edition = "2021"
 
 # ------------------------- Enable a small amount of optimization in the dev profile.
@@ -42,6 +42,7 @@ axum = { version = "0.8", features = ["multipart"] }
 local-ip-address = "0.6"
 serde = { version = "1", features = ["derive"] }
 tokio-util = { version = "0.7", features = ["io"] }
-mime_guess = "2"
-tower-http = { version = "0.7", features = ["limit", "trace"] }
+tower = { version = "0.5.3", features = ["util"] }
+tower-http = { version = "0.7", features = ["limit", "trace", "fs"] }
 askama = "0.16"
+percent-encoding = "2.3"
