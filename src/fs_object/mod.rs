@@ -72,61 +72,6 @@ impl FsObject {
         })
     }
 
-    /// Return iterator over each FSObject that is a file
-    pub fn file_iter(&self) -> impl Iterator<Item = &FsObject> {
-        let mut stack = vec![self];
-        std::iter::from_fn(move || {
-            while let Some(current) = stack.pop() {
-                if current.is_file() {
-                    return Some(current); // Return the current object if it is a file
-                } else {
-                    if let Some(ref content) = current.content {
-                        stack.extend(content.iter().map(Arc::as_ref));
-                    }
-                }
-            }
-            None
-        })
-    }
-
-    /// Return iterator over each FSObject that is a directory
-    pub fn dir_iter(&self) -> impl Iterator<Item = &FsObject> {
-        let mut stack = vec![self];
-        std::iter::from_fn(move || {
-            while let Some(current) = stack.pop() {
-                if current.is_dir() {
-                    // Return the current directory object
-                    if let Some(ref content) = current.content {
-                        // Push content of directories to stack
-                        stack.extend(content.iter().map(Arc::as_ref));
-                    }
-                    return Some(current);
-                } else if let Some(ref content) = current.content {
-                    // Push content of directories to stack
-                    stack.extend(content.iter().map(Arc::as_ref));
-                }
-            }
-            None
-        })
-    }
-
-    /// Return iterator over each FSObject that is a symbolic link. Not ready yet!
-    pub fn symlink_iter(&self) -> impl Iterator<Item = &FsObject> {
-        let mut stack = vec![self];
-        std::iter::from_fn(move || {
-            while let Some(current) = stack.pop() {
-                if current.is_symlink() {
-                    return Some(current); // Return the current object if it is a file
-                } else {
-                    if let Some(ref content) = current.content {
-                        stack.extend(content.iter().map(Arc::as_ref));
-                    }
-                }
-            }
-            None
-        })
-    }
-
     /// Return Hash of FSObject that are obtained with DefaultHasher
     pub fn get_hash(&self) -> u64 {
         let mut hasher = DefaultHasher::new();
@@ -143,25 +88,23 @@ impl Hash for FsObject {
 }
 
 pub fn show_fs_objects_summary(fs_objects: &FsObjects) {
-    let total_elements: usize = fs_objects
-        .iter()
-        .map(|fs_obj| fs_obj.recursive_iter().count())
-        .sum();
+    let mut total_elements = 0;
+    let mut total_files = 0;
+    let mut total_directories = 0;
+    let mut total_symlinks = 0;
 
-    let total_files: usize = fs_objects
-        .iter()
-        .map(|fs_obj| fs_obj.file_iter().count())
-        .sum();
-
-    let total_directories: usize = fs_objects
-        .iter()
-        .map(|fs_obj| fs_obj.dir_iter().count())
-        .sum();
-
-    let total_symlinks: usize = fs_objects
-        .iter()
-        .map(|fs_obj| fs_obj.symlink_iter().count())
-        .sum();
+    for fs_obj in fs_objects {
+        for item in fs_obj.recursive_iter() {
+            total_elements += 1;
+            if item.is_file() {
+                total_files += 1;
+            } else if item.is_dir() {
+                total_directories += 1;
+            } else if item.is_symlink() {
+                total_symlinks += 1;
+            }
+        }
+    }
 
     println!("\nObtained:\t{} elements, where:", total_elements);
     println!("\t\t{} files", total_files);
