@@ -83,7 +83,6 @@ impl FsObject {
 impl Hash for FsObject {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.path.hash(state);
-        self.content.hash(state);
     }
 }
 
