@@ -1,6 +1,7 @@
 use crate::cli_args::Args;
-use crate::fs_object::{show_fs_objects_summary, FsObject};
+use crate::fs_object::{FsObject, FsSummary};
 use crate::html_page_utils::unordered_list;
+use crate::storage::content_recursively;
 use crate::style::STYLE_CSS;
 use askama::Template;
 use axum::{
@@ -45,8 +46,9 @@ pub fn setup(cli_args: &mut Args) -> Result<Router, Box<dyn std::error::Error>> 
         return Err("No valid paths provided".into());
     }
 
-    let fs_objects = crate::storage::content_recursively(&cli_args.paths)?;
-    show_fs_objects_summary(&fs_objects);
+    let fs_objects = content_recursively(&cli_args.paths)?;
+    let summary = FsSummary::from_objects(&fs_objects);
+    println!("{summary}");
 
     tracing::debug!("Generating HTML...");
 

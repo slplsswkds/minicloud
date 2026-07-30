@@ -19,7 +19,7 @@ cargo build --release
 ### Roadmap
 - [x] Scan files
 - [x] Scan directories
-- [ ] Scan symbolic links
+- [x] Scan symbolic links
 - [x] Generate an HTML page in the form of a tree
 - [x] Hashing items in the hyperlinks
 - [x] Chunked uploading to server

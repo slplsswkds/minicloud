@@ -42,7 +42,7 @@ fn render_list_items(
                 buf,
                 r#"<li>🗋 <a href="/dl?id={hash}">{}</a>, {} <a href="/pw?id={hash}">[view]</a></li>"#,
                 item.name(),
-                item.size_string()
+                item.size_display()
             );
         }
     }
