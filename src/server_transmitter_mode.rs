@@ -29,7 +29,7 @@ pub struct TransmitterState {
 #[template(path = "server_transmitter_mode/index.html", escape = "none")]
 struct TransmitterTemplate<'a> {
     title: &'a str,
-    files_list: String,
+    files_list: &'a str,
 }
 
 #[derive(Deserialize)]
@@ -55,15 +55,22 @@ pub fn setup(cli_args: &mut Args) -> Result<Router, Box<dyn std::error::Error>> 
 
     let html_page = TransmitterTemplate {
         title: APP_TITLE,
-        files_list,
+        files_list: &files_list,
     }
     .render()?;
 
-    tracing::debug!("HTML generated.");
+    let packed_html: Box<str> = html_page.into_boxed_str();
+    let page_bytes = Bytes::from(packed_html.into_boxed_bytes());
+
+    tracing::info!(
+        "Generated HTML size: {} bytes ({:.2} KiB)",
+        page_bytes.len(),
+        page_bytes.len() as f64 / 1024.0
+    );
 
     let state = TransmitterState {
         fs_objects: Arc::new(hash_map),
-        index_page: Html(Bytes::from(html_page)),
+        index_page: Html(page_bytes),
     };
 
     let router = Router::new()

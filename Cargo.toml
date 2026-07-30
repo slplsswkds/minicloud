@@ -1,6 +1,6 @@
 [package]
 name = "minicloud"
-version = "0.16.1"
+version = "0.17.0"
 edition = "2021"
 
 # ------------------------- Enable a small amount of optimization in the dev profile.
