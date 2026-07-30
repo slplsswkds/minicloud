@@ -1,7 +1,6 @@
 use crate::cli_args::Args;
 use crate::fs_object::{show_fs_objects_summary, FsObject};
 use crate::html_page_utils::unordered_list;
-use crate::storage::content_recursively;
 use crate::style::STYLE_CSS;
 use askama::Template;
 use axum::{
@@ -23,6 +22,7 @@ const APP_TITLE: &str = concat!("Minicloud v", env!("CARGO_PKG_VERSION"));
 #[derive(Clone)]
 pub struct TransmitterState {
     pub fs_objects: Arc<HashMap<u64, Arc<FsObject>>>,
+    pub index_page: Html<Bytes>,
 }
 
 #[derive(Template)]
@@ -45,7 +45,7 @@ pub fn setup(cli_args: &mut Args) -> Result<Router, Box<dyn std::error::Error>> 
         return Err("No valid paths provided".into());
     }
 
-    let fs_objects = content_recursively(&cli_args.paths)?;
+    let fs_objects = crate::storage::content_recursively(&cli_args.paths)?;
     show_fs_objects_summary(&fs_objects);
 
     tracing::debug!("Generating HTML...");
@@ -63,18 +63,11 @@ pub fn setup(cli_args: &mut Args) -> Result<Router, Box<dyn std::error::Error>> 
 
     let state = TransmitterState {
         fs_objects: Arc::new(hash_map),
+        index_page: Html(Bytes::from(html_page)),
     };
 
-    let page_bytes = Bytes::from(html_page);
-
     let router = Router::new()
-        .route(
-            "/",
-            get({
-                let bytes = page_bytes.clone();
-                move || async move { Html(bytes.clone()) }
-            }),
-        )
+        .route("/", get(show_download_form))
         .route("/dl", get(download_handler))
         .route("/pw", get(preview_handler))
         .route("/script.js", get(serve_script_js))
@@ -85,16 +78,27 @@ pub fn setup(cli_args: &mut Args) -> Result<Router, Box<dyn std::error::Error>> 
     Ok(router)
 }
 
+async fn show_download_form(State(state): State<TransmitterState>) -> impl IntoResponse {
+    tracing::info!("Root page request");
+    state.index_page
+}
+
 async fn serve_script_js() -> impl IntoResponse {
     (
-        [(header::CONTENT_TYPE, "application/javascript")],
+        [
+            (header::CONTENT_TYPE, "application/javascript"),
+            (header::CACHE_CONTROL, "public, max-age=3600"),
+        ],
         SCRIPT_JS,
     )
 }
 
 async fn serve_style_css() -> impl IntoResponse {
     (
-        [(header::CONTENT_TYPE, "text/css; charset=utf-8")],
+        [
+            (header::CONTENT_TYPE, "text/css; charset=utf-8"),
+            (header::CACHE_CONTROL, "public, max-age=3600"),
+        ],
         STYLE_CSS,
     )
 }
@@ -120,8 +124,14 @@ pub async fn download_handler(
         })?
         .into_response();
 
-    let filename = fs_object.name().replace('"', "\\\"");
-    let disposition = format!("attachment; filename=\"{}\"", filename);
+    let raw_name = fs_object.name();
+    let ascii_name = raw_name.replace('"', "\\\"");
+    let encoded_name = utf8_percent_encode(&raw_name);
+
+    let disposition = format!(
+        "attachment; filename=\"{}\"; filename*=UTF-8''{}",
+        ascii_name, encoded_name
+    );
 
     if let Ok(val) = HeaderValue::try_from(disposition) {
         response
@@ -154,4 +164,19 @@ pub async fn preview_handler(
         .into_response();
 
     Ok(response)
+}
+
+fn utf8_percent_encode(s: &str) -> String {
+    let mut encoded = String::new();
+    for byte in s.bytes() {
+        match byte {
+            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'_' | b'.' | b'~' => {
+                encoded.push(byte as char);
+            }
+            _ => {
+                encoded.push_str(&format!("%{:02X}", byte));
+            }
+        }
+    }
+    encoded
 }
