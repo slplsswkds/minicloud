@@ -37,6 +37,13 @@ pub fn setup(cli_args: &Args) -> Router {
         .clone()
         .unwrap_or_else(|| PathBuf::from("./uploads"));
 
+    if let Err(err) = std::fs::create_dir_all(&uploads_path) {
+        tracing::error!(
+            "Failed to create uploads directory {:?}: {err}",
+            uploads_path
+        );
+    }
+
     tracing::info!(
         "Receive mode enabled. Files will be saved to: {:?}",
         uploads_path
@@ -83,14 +90,20 @@ pub async fn show_upload_form(
 
 async fn serve_script_js() -> impl IntoResponse {
     (
-        [(header::CONTENT_TYPE, "application/javascript")],
+        [
+            (header::CONTENT_TYPE, "application/javascript"),
+            (header::CACHE_CONTROL, "public, max-age=3600"),
+        ],
         SCRIPT_JS,
     )
 }
 
 async fn serve_style_css() -> impl IntoResponse {
     (
-        [(header::CONTENT_TYPE, "text/css; charset=utf-8")],
+        [
+            (header::CONTENT_TYPE, "text/css; charset=utf-8"),
+            (header::CACHE_CONTROL, "public, max-age=3600"),
+        ],
         STYLE_CSS,
     )
 }
@@ -99,16 +112,6 @@ pub async fn accept_upload_form(
     State(state): State<ReceiverState>,
     mut multipart: Multipart,
 ) -> Result<&'static str, StatusCode> {
-    tokio::fs::create_dir_all(state.uploads_path.as_ref())
-        .await
-        .map_err(|err| {
-            tracing::error!(
-                "Failed to create directory {}: {err}",
-                state.uploads_path.display()
-            );
-            StatusCode::INTERNAL_SERVER_ERROR
-        })?;
-
     while let Some(mut field) = multipart.next_field().await.map_err(|err| {
         tracing::warn!("Failed to read multipart field: {err}");
         StatusCode::BAD_REQUEST
@@ -125,8 +128,10 @@ pub async fn accept_upload_form(
 }
 
 async fn save_field_to_file(file_path: &Path, field: &mut Field<'_>) -> Result<(), StatusCode> {
-    let file = tokio::fs::File::create(file_path).await.map_err(|err| {
-        tracing::error!("Failed to create file {}: {err}", file_path.display());
+    let tmp_path = file_path.with_extension("tmp");
+
+    let file = tokio::fs::File::create(&tmp_path).await.map_err(|err| {
+        tracing::error!("Failed to create temp file {}: {err}", tmp_path.display());
         StatusCode::INTERNAL_SERVER_ERROR
     })?;
 
@@ -134,18 +139,29 @@ async fn save_field_to_file(file_path: &Path, field: &mut Field<'_>) -> Result<(
 
     while let Some(chunk) = field.chunk().await.map_err(|err| {
         tracing::error!("Failed to read chunk: {err}");
+        let _ = tokio::fs::remove_file(&tmp_path); // Видаляємо тимчасовий файл при помилці
         StatusCode::BAD_REQUEST
     })? {
-        writer.write_all(&chunk).await.map_err(|err| {
+        if let Err(err) = writer.write_all(&chunk).await {
             tracing::error!("Failed to write chunk to file: {err}");
-            StatusCode::INTERNAL_SERVER_ERROR
-        })?;
+            let _ = tokio::fs::remove_file(&tmp_path);
+            return Err(StatusCode::INTERNAL_SERVER_ERROR);
+        }
     }
 
-    writer.flush().await.map_err(|err| {
+    if let Err(err) = writer.flush().await {
         tracing::error!("Failed to flush file to disk: {err}");
-        StatusCode::INTERNAL_SERVER_ERROR
-    })?;
+        let _ = tokio::fs::remove_file(&tmp_path);
+        return Err(StatusCode::INTERNAL_SERVER_ERROR);
+    }
+
+    tokio::fs::rename(&tmp_path, file_path)
+        .await
+        .map_err(|err| {
+            tracing::error!("Failed to rename temp file to final destination: {err}");
+            let _ = tokio::fs::remove_file(&tmp_path);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
 
     Ok(())
 }
