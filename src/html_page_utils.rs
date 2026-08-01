@@ -28,12 +28,19 @@ fn render_list_items(
 ) {
     for item in items {
         if item.is_dir() {
-            let _ = writeln!(buf, "<li>📁 {}</li>", item.name());
+            buf.push_str("<li><details><summary>📁 ");
+            buf.push_str(item.name());
+            buf.push_str("</summary>\n");
+
             if let Some(content) = &item.content {
                 render_unordered_list(content, hash_map, buf);
             }
+
+            buf.push_str("</details></li>\n");
         } else if item.is_symlink() {
-            let _ = writeln!(buf, "<li>🔗 {}</li>", item.name());
+            buf.push_str("<li>🔗 ");
+            buf.push_str(item.name());
+            buf.push_str("</li>\n");
         } else {
             let hash = item.get_hash();
             hash_map.insert(hash, Arc::clone(item));
