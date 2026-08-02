@@ -5,10 +5,9 @@ mod server_receiver_mode;
 mod server_transmitter_mode;
 mod storage;
 mod style;
-
 use clap::Parser;
+use qrcode::{render::unicode, QrCode};
 use std::net::SocketAddr;
-
 use tracing_subscriber;
 use tracing_subscriber::EnvFilter;
 
@@ -33,11 +32,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let socket_addr = SocketAddr::new(local_ip, cli_args.port);
     let listener = tokio::net::TcpListener::bind(socket_addr).await?;
 
-    tracing::info!(
-        "Listening on http://{}:{}",
-        socket_addr.ip(),
-        socket_addr.port()
-    );
+    let url = format!("http://{socket_addr}");
+    let qrcode = QrCode::new(&url)?.render::<unicode::Dense1x2>().build();
+
+    tracing::info!("Listening {url}");
+    tracing::info!("{}", qrcode);
 
     axum::serve(listener, app).await?;
 
