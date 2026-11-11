@@ -135,7 +135,7 @@ pub async fn download_handler(
 
     let raw_name = fs_object.name();
     let ascii_name = raw_name.replace('"', "\\\"");
-    let encoded_name = utf8_percent_encode(&raw_name);
+    let encoded_name = utf8_percent_encode(raw_name);
 
     let disposition = format!(
         "attachment; filename=\"{}\"; filename*=UTF-8''{}",

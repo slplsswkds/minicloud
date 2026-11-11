@@ -70,9 +70,7 @@ pub fn setup(cli_args: &Args) -> Router {
         .with_state(state)
 }
 
-pub async fn show_upload_form(
-    State(state): State<ReceiverState>,
-) -> Result<Html<String>, StatusCode> {
+async fn show_upload_form(State(state): State<ReceiverState>) -> Result<Html<String>, StatusCode> {
     tracing::info!("Root page request");
 
     let page = ReceiverTemplate {
@@ -108,7 +106,7 @@ async fn serve_style_css() -> impl IntoResponse {
     )
 }
 
-pub async fn accept_upload_form(
+async fn accept_upload_form(
     State(state): State<ReceiverState>,
     mut multipart: Multipart,
 ) -> Result<&'static str, StatusCode> {
@@ -130,40 +128,49 @@ pub async fn accept_upload_form(
 async fn save_field_to_file(file_path: &Path, field: &mut Field<'_>) -> Result<(), StatusCode> {
     let tmp_path = file_path.with_extension("tmp");
 
-    let file = tokio::fs::File::create(&tmp_path).await.map_err(|err| {
-        tracing::error!("Failed to create temp file {}: {err}", tmp_path.display());
-        StatusCode::INTERNAL_SERVER_ERROR
-    })?;
-
-    let mut writer = BufWriter::new(file);
-
-    while let Some(chunk) = field.chunk().await.map_err(|err| {
-        tracing::error!("Failed to read chunk: {err}");
-        let _ = tokio::fs::remove_file(&tmp_path); // Видаляємо тимчасовий файл при помилці
-        StatusCode::BAD_REQUEST
-    })? {
-        if let Err(err) = writer.write_all(&chunk).await {
-            tracing::error!("Failed to write chunk to file: {err}");
-            let _ = tokio::fs::remove_file(&tmp_path);
-            return Err(StatusCode::INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    if let Err(err) = writer.flush().await {
-        tracing::error!("Failed to flush file to disk: {err}");
-        let _ = tokio::fs::remove_file(&tmp_path);
-        return Err(StatusCode::INTERNAL_SERVER_ERROR);
-    }
-
-    tokio::fs::rename(&tmp_path, file_path)
-        .await
-        .map_err(|err| {
-            tracing::error!("Failed to rename temp file to final destination: {err}");
-            let _ = tokio::fs::remove_file(&tmp_path);
+    let result = async {
+        let file = tokio::fs::File::create(&tmp_path).await.map_err(|err| {
+            tracing::error!("Failed to create {}: {err}", tmp_path.display());
             StatusCode::INTERNAL_SERVER_ERROR
         })?;
 
-    Ok(())
+        let mut writer = BufWriter::new(file);
+
+        while let Some(chunk) = field.chunk().await.map_err(|err| {
+            tracing::error!("Failed to read field chunk: {err}");
+            StatusCode::BAD_REQUEST
+        })? {
+            writer.write_all(&chunk).await.map_err(|err| {
+                tracing::error!("Failed to write to {}: {err}", tmp_path.display());
+                StatusCode::INTERNAL_SERVER_ERROR
+            })?;
+        }
+
+        writer.flush().await.map_err(|err| {
+            tracing::error!("Failed to flush {}: {err}", tmp_path.display());
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+
+        drop(writer);
+
+        tokio::fs::rename(&tmp_path, file_path)
+            .await
+            .map_err(|err| {
+                tracing::error!(
+                    "Failed to rename {} to {}: {err}",
+                    tmp_path.display(),
+                    file_path.display()
+                );
+                StatusCode::INTERNAL_SERVER_ERROR
+            })
+    }
+    .await;
+
+    if result.is_err() {
+        let _ = tokio::fs::remove_file(&tmp_path).await;
+    }
+
+    result
 }
 
 fn sanitize_filename(raw_name: Option<&str>) -> &str {

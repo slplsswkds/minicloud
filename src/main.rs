@@ -8,7 +8,6 @@ mod style;
 use clap::Parser;
 use qrcode::{render::unicode, QrCode};
 use std::net::SocketAddr;
-use tracing_subscriber;
 use tracing_subscriber::EnvFilter;
 
 #[tokio::main]
@@ -22,10 +21,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut cli_args = cli_args::Args::parse();
 
-    let app;
-    match cli_args.receive {
-        true => app = server_receiver_mode::setup(&cli_args),
-        false => app = server_transmitter_mode::setup(&mut cli_args)?,
+    let app = match cli_args.receive {
+        true => server_receiver_mode::setup(&cli_args),
+        false => server_transmitter_mode::setup(&mut cli_args)?,
     };
 
     let local_ip = local_ip_address::local_ip()?;
