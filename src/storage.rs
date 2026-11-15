@@ -26,16 +26,11 @@ pub fn content_recursively(paths: &[PathBuf]) -> Result<FsObjects> {
 /// Processes a root path (which comes directly as a `PathBuf`, not from `read_dir`).
 fn process_root_path(path: PathBuf) -> Result<FsObject> {
     let metadata = path.symlink_metadata()?;
-    let is_dir = metadata.is_dir();
-    let is_symlink = metadata.is_symlink();
+    let filetype = metadata.file_type();
+    let filesize = filetype.is_file().then_some(metadata.len());
+    let content = filetype.is_dir().then(|| scan_dir_content(&path)).flatten();
 
-    let content = if is_dir && !is_symlink {
-        scan_dir_content(&path)
-    } else {
-        None
-    };
-
-    Ok(FsObject::new(path, metadata, content))
+    Ok(FsObject::new(path, filetype, filesize, content))
 }
 
 /// Reads a directory sequentially and constructs child [`FsObject`]s directly
@@ -74,17 +69,13 @@ fn scan_dir_content(path: &Path) -> Option<FsObjects> {
 }
 
 fn process_dir_entry(entry: DirEntry) -> Result<FsObject> {
-    let metadata = entry.metadata()?;
-    let is_dir = metadata.is_dir();
-    let is_symlink = metadata.is_symlink();
-
+    let filetype = entry.file_type()?;
     let path = entry.path();
+    let filesize = filetype
+        .is_file()
+        .then(|| entry.metadata().map(|m| m.len())) // syscalls!
+        .transpose()?;
+    let content = filetype.is_dir().then(|| scan_dir_content(&path)).flatten();
 
-    let content = if is_dir && !is_symlink {
-        scan_dir_content(&path)
-    } else {
-        None
-    };
-
-    Ok(FsObject::new(path, metadata, content))
+    Ok(FsObject::new(path, filetype, filesize, content))
 }

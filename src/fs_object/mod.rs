@@ -3,7 +3,7 @@
 use std::{
     ffi::OsStr,
     fmt,
-    fs::Metadata,
+    fs::FileType,
     hash::{DefaultHasher, Hash, Hasher},
     path::PathBuf,
     sync::Arc,
@@ -12,9 +12,9 @@ use std::{
 pub type FsObjects = Vec<Arc<FsObject>>;
 
 /// Helper struct for formatting file sizes into human-readable strings without heap allocations.
-pub struct SizeFormatter(pub u64);
+pub struct SizeFormatter<T>(pub T);
 
-impl fmt::Display for SizeFormatter {
+impl fmt::Display for SizeFormatter<u64> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let size_kb = self.0 as f64 / 1024.0;
         if size_kb < 0.1 {
@@ -25,13 +25,25 @@ impl fmt::Display for SizeFormatter {
     }
 }
 
+impl fmt::Display for SizeFormatter<Option<u64>> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self.0 {
+            Some(bytes) => SizeFormatter(bytes).fmt(f),
+            None => Ok(()),
+        }
+    }
+}
+
 /// Represents a filesystem entity (file, directory, or symlink) within the tree structure.
 pub struct FsObject {
     /// Path to the filesystem object.
     pub path: PathBuf,
 
     /// Object metadata obtained from the filesystem.
-    pub metadata: Metadata,
+    pub filetype: FileType,
+
+    /// File size in bytes if this entity is a regular file.
+    pub filesize: Option<u64>,
 
     /// Directory contents if this entity is a non-empty directory.
     pub content: Option<FsObjects>,
@@ -39,24 +51,30 @@ pub struct FsObject {
 
 impl FsObject {
     /// Creates a new [`FsObject`] instance.
-    pub fn new(path: PathBuf, metadata: Metadata, content: Option<FsObjects>) -> Self {
+    pub fn new(
+        path: PathBuf,
+        filetype: FileType,
+        filesize: Option<u64>,
+        content: Option<FsObjects>,
+    ) -> Self {
         Self {
             path,
-            metadata,
+            filetype,
+            filesize,
             content,
         }
     }
 
     pub fn is_file(&self) -> bool {
-        self.metadata.is_file()
+        self.filetype.is_file()
     }
 
     pub fn is_dir(&self) -> bool {
-        self.metadata.is_dir()
+        self.filetype.is_dir()
     }
 
     pub fn is_symlink(&self) -> bool {
-        self.metadata.is_symlink()
+        self.filetype.is_symlink()
     }
 
     pub fn name(&self) -> &str {
@@ -67,8 +85,8 @@ impl FsObject {
     }
 
     /// Returns a displayable formatter for the file size.
-    pub fn size_display(&self) -> SizeFormatter {
-        SizeFormatter(self.metadata.len())
+    pub fn size_display(&self) -> impl fmt::Display {
+        SizeFormatter(self.filesize)
     }
 
     /// Returns a depth-first iterator over this node and all nested [`FsObject`] nodes.
